@@ -1,0 +1,35 @@
+name: Check Examples Size
+
+on:
+  pull_request:
+    paths:
+      - 'examples/**'
+
+jobs:
+  check-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check example directory sizes
+        run: |
+          MAX_SIZE=$((5 * 1024))  # 5MB in KB
+          FAILED=0
+          for dir in examples/*/; do
+            if [ -d "$dir" ]; then
+              SIZE=$(du -sk "$dir" | cut -f1)
+              NAME=$(basename "$dir")
+              if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+                echo "❌ $NAME: ${SIZE}KB exceeds 5MB limit"
+                FAILED=1
+              else
+                echo "✅ $NAME: ${SIZE}KB"
+              fi
+            fi
+          done
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Some examples exceed the 5MB size limit."
+            echo "Please optimize assets or use external hosting for large files."
+            exit 1
+          fi

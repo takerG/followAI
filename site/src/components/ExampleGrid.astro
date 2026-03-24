@@ -1,0 +1,88 @@
+---
+import type { ResolvedExample } from '../types/example';
+import ExampleCard from './ExampleCard.astro';
+
+export interface Props {
+  examples: ResolvedExample[];
+}
+
+const { examples } = Astro.props;
+---
+
+{examples.length > 0 ? (
+  <section class="grid-container">
+    <div class="grid">
+      {examples.map((example) => (
+        <ExampleCard example={example} />
+      ))}
+    </div>
+  </section>
+) : (
+  <section class="empty-state">
+    <div class="empty-content">
+      <p class="empty-icon">📁</p>
+      <p class="empty-text">还没有示例</p>
+      <p class="empty-hint">在 <code>examples/</code> 下创建你的第一个！</p>
+    </div>
+  </section>
+)}
+
+<style>
+  .grid-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .empty-state {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    text-align: center;
+  }
+
+  .empty-content {
+    color: #999;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+  }
+
+  .empty-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .empty-hint {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: #999;
+  }
+
+  .empty-hint code {
+    background: #f0f0f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 640px) {
+    .grid-container {
+      padding: 0 16px 32px;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+</style>

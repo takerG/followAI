@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 编程提示词工程 — 交互式指南</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-primary:#6366f1;--c-primary-light:#818cf8;--c-primary-dark:#4f46e5;
+  --c-accent:#f59e0b;--c-accent-light:#fbbf24;
+  --c-success:#10b981;--c-danger:#ef4444;
+  --c-bg:#f8fafc;--c-surface:#fff;--c-surface-alt:#f1f5f9;
+  --c-text:#0f172a;--c-text-secondary:#475569;--c-text-muted:#94a3b8;
+  --c-border:#e2e8f0;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.1);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.7;overflow-x:hidden}
+a{color:var(--c-primary);text-decoration:none}
+
+/* ===== NAV ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--c-border);transition:var(--transition)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-weight:700;font-size:1.1rem;background:linear-gradient(135deg,var(--c-primary),var(--c-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:.25rem}
+.nav-links a{padding:.4rem .75rem;border-radius:var(--radius-sm);font-size:.875rem;color:var(--c-text-secondary);transition:var(--transition)}
+.nav-links a:hover,.nav-links a.active{background:var(--c-surface-alt);color:var(--c-primary)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 1.5rem 4rem;background:linear-gradient(135deg,#eef2ff 0%,#faf5ff 30%,#fff7ed 60%,#f0fdf4 100%);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.12),transparent 70%);top:-200px;right:-100px;animation:float 8s ease-in-out infinite}
+.hero::after{content:"";position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1),transparent 70%);bottom:-100px;left:-50px;animation:float 10s ease-in-out infinite reverse}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+.hero-content{position:relative;z-index:1;max-width:720px}
+.hero-badge{display:inline-block;padding:.35rem 1rem;border-radius:50px;background:rgba(99,102,241,.1);color:var(--c-primary);font-size:.8rem;font-weight:600;margin-bottom:1.5rem;letter-spacing:.5px}
+.hero h1{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;line-height:1.2;margin-bottom:1rem}
+.hero h1 .gradient{background:linear-gradient(135deg,var(--c-primary),#a855f7,var(--c-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:1.15rem;color:var(--c-text-secondary);max-width:560px;margin:0 auto 2rem}
+.hero-actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;border-radius:var(--radius);font-size:.95rem;font-weight:600;border:none;cursor:pointer;transition:var(--transition)}
+.btn-primary{background:var(--c-primary);color:#fff;box-shadow:0 2px 12px rgba(99,102,241,.3)}
+.btn-primary:hover{background:var(--c-primary-dark);transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,.4)}
+.btn-outline{background:var(--c-surface);color:var(--c-text);border:1.5px solid var(--c-border)}
+.btn-outline:hover{border-color:var(--c-primary);color:var(--c-primary)}
+.hero-stats{display:flex;gap:2.5rem;justify-content:center;margin-top:3rem}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:1.75rem;font-weight:800;color:var(--c-primary)}
+.hero-stat .label{font-size:.8rem;color:var(--c-text-muted)}
+
+/* ===== SECTIONS ===== */
+section{padding:5rem 1.5rem}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-header{text-align:center;margin-bottom:3rem}
+.section-header h2{font-size:clamp(1.5rem,3vw,2.25rem);font-weight:700;margin-bottom:.5rem}
+.section-header p{color:var(--c-text-secondary);max-width:560px;margin:0 auto}
+.section-alt{background:var(--c-surface-alt)}
+
+/* ===== COMPARISONS ===== */
+.compare-tabs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+.compare-tab{padding:.5rem 1.25rem;border-radius:50px;border:1.5px solid var(--c-border);background:var(--c-surface);cursor:pointer;font-size:.875rem;font-weight:500;transition:var(--transition)}
+.compare-tab.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+.compare-tab:hover:not(.active){border-color:var(--c-primary-light)}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+@media(max-width:768px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border-radius:var(--radius-lg);border:1.5px solid var(--c-border);background:var(--c-surface);overflow:hidden;transition:var(--transition);opacity:0;transform:translateY(16px);animation:fadeUp .5s ease forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.compare-card.bad{border-color:#fecaca}
+.compare-card.good{border-color:#bbf7d0}
+.compare-label{padding:.6rem 1rem;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.compare-card.bad .compare-label{background:#fef2f2;color:var(--c-danger)}
+.compare-card.good .compare-label{background:#f0fdf4;color:var(--c-success)}
+.compare-body{padding:1.25rem}
+.compare-body pre{background:var(--c-surface-alt);padding:1rem;border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;font-family:"Cascadia Code","Fira Code","JetBrains Mono",monospace}
+.compare-why{margin-top:1rem;padding:.75rem 1rem;border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6}
+.compare-card.bad .compare-why{background:#fef2f2;color:#991b1b}
+.compare-card.good .compare-why{background:#f0fdf4;color:#166534}
+.compare-arrow{display:none;justify-content:center;align-items:center;font-size:1.75rem;color:var(--c-primary);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ===== CLEAR FRAMEWORK ===== */
+.clear-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem}
+@media(max-width:1024px){.clear-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.clear-grid{grid-template-columns:1fr 1fr}}
+.clear-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden}
+.clear-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c-primary);transform:scaleX(0);transition:var(--transition);transform-origin:left}
+.clear-card:hover::before,.clear-card.active::before{transform:scaleX(1)}
+.clear-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.clear-card.active{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.clear-letter{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;font-size:1.25rem;font-weight:800;color:#fff;transition:var(--transition)}
+.clear-card:nth-child(1) .clear-letter{background:linear-gradient(135deg,#6366f1,#818cf8)}
+.clear-card:nth-child(2) .clear-letter{background:linear-gradient(135deg,#8b5cf6,#a78bfa)}
+.clear-card:nth-child(3) .clear-letter{background:linear-gradient(135deg,#ec4899,#f472b6)}
+.clear-card:nth-child(4) .clear-letter{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.clear-card:nth-child(5) .clear-letter{background:linear-gradient(135deg,#10b981,#34d399)}
+.clear-title{font-weight:700;font-size:.95rem;margin-bottom:.25rem}
+.clear-sub{font-size:.8rem;color:var(--c-text-muted)}
+.clear-detail{margin-top:2rem;background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:2rem;display:none;animation:fadeUp .4s ease}
+.clear-detail.show{display:block}
+.clear-detail h3{font-size:1.25rem;margin-bottom:.75rem}
+.clear-detail p{color:var(--c-text-secondary);margin-bottom:1rem}
+.clear-example{background:var(--c-surface-alt);border-radius:var(--radius-sm);padding:1rem;margin-top:.75rem}
+.clear-example pre{font-size:.85rem;white-space:pre-wrap;word-break:break-word;font-family:"Cascadia Code","Fira Code",monospace;line-height:1.6}
+.clear-example-label{font-size:.75rem;font-weight:600;color:var(--c-primary);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.5px}
+
+/* ===== BUILDER ===== */
+.builder-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+@media(max-width:768px){.builder-wrap{grid-template-columns:1fr}}
+.builder-form{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.75rem}
+.builder-form h3{margin-bottom:1.25rem;font-size:1.1rem}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem;color:var(--c-text-secondary)}
+.form-group select,.form-group input,.form-group textarea{width:100%;padding:.6rem .85rem;border:1.5px solid var(--c-border);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;background:var(--c-surface);transition:var(--transition);color:var(--c-text)}
+.form-group select:focus,.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-group textarea{resize:vertical;min-height:80px}
+.template-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
+.template-chip{padding:.4rem .9rem;border-radius:50px;border:1.5px solid var(--c-border);background:var(--c-surface);font-size:.8rem;cursor:pointer;transition:var(--transition);font-weight:500}
+.template-chip:hover{border-color:var(--c-primary-light)}
+.template-chip.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+.builder-output{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.75rem;position:sticky;top:5rem}
+.builder-output h3{margin-bottom:1rem;font-size:1.1rem;display:flex;align-items:center;justify-content:space-between}
+.builder-result{background:#0f172a;color:#e2e8f0;border-radius:var(--radius-sm);padding:1.25rem;font-size:.85rem;line-height:1.7;font-family:"Cascadia Code","Fira Code",monospace;white-space:pre-wrap;word-break:break-word;min-height:200px;max-height:420px;overflow-y:auto;transition:var(--transition)}
+.copy-btn{padding:.35rem .75rem;border-radius:var(--radius-sm);border:1.5px solid var(--c-border);background:var(--c-surface);font-size:.78rem;cursor:pointer;transition:var(--transition);font-weight:500}
+.copy-btn:hover{border-color:var(--c-primary);color:var(--c-primary)}
+.copy-btn.copied{background:var(--c-success);color:#fff;border-color:var(--c-success)}
+.quality-bar{margin-top:1rem}
+.quality-bar-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.35rem}
+.quality-bar-track{height:6px;background:var(--c-surface-alt);border-radius:50px;overflow:hidden}
+.quality-bar-fill{height:100%;border-radius:50px;transition:width .6s cubic-bezier(.4,0,.2,1),background .3s}
+
+/* ===== TIPS ===== */
+.tips-tabs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+.tips-tab{padding:.55rem 1.25rem;border-radius:50px;border:1.5px solid var(--c-border);background:var(--c-surface);cursor:pointer;font-size:.875rem;font-weight:500;transition:var(--transition);display:flex;align-items:center;gap:.4rem}
+.tips-tab.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+.tips-tab:hover:not(.active){border-color:var(--c-primary-light)}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+@media(max-width:600px){.tips-grid{grid-template-columns:1fr}}
+.tip-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition);animation:fadeUp .4s ease forwards;opacity:0}
+.tip-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.tip-card:nth-child(1){animation-delay:.05s}.tip-card:nth-child(2){animation-delay:.1s}.tip-card:nth-child(3){animation-delay:.15s}.tip-card:nth-child(4){animation-delay:.2s}
+.tip-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.75rem}
+.tip-card h4{font-size:1rem;margin-bottom:.5rem}
+.tip-card p{font-size:.85rem;color:var(--c-text-secondary);line-height:1.6}
+.tip-example{margin-top:.75rem;padding:.65rem .85rem;background:var(--c-surface-alt);border-radius:var(--radius-sm);font-size:.8rem;font-family:"Cascadia Code","Fira Code",monospace;line-height:1.5;color:var(--c-text-secondary);white-space:pre-wrap;word-break:break-word}
+.cat-code .tip-icon{background:#eef2ff;color:#6366f1}
+.cat-debug .tip-icon{background:#fef2f2;color:#ef4444}
+.cat-refactor .tip-icon{background:#f0fdf4;color:#10b981}
+.cat-test .tip-icon{background:#fff7ed;color:#f59e0b}
+
+/* ===== CHEAT SHEET ===== */
+.cheat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:768px){.cheat-grid{grid-template-columns:1fr}}
+.cheat-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem}
+.cheat-card h4{font-size:.95rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.cheat-list{list-style:none}
+.cheat-list li{padding:.5rem 0;border-bottom:1px solid var(--c-border);font-size:.85rem;display:flex;align-items:flex-start;gap:.5rem;line-height:1.5}
+.cheat-list li:last-child{border-bottom:none}
+.cheat-list li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--c-primary);margin-top:.5rem;flex-shrink:0}
+
+/* ===== FOOTER ===== */
+.footer{text-align:center;padding:3rem 1.5rem;border-top:1px solid var(--c-border);color:var(--c-text-muted);font-size:.85rem}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">Prompt Engineering</div>
+    <div class="nav-links">
+      <a href="#compare">对比案例</a>
+      <a href="#clear">CLEAR 框架</a>
+      <a href="#builder">提示词构建器</a>
+      <a href="#tips">实用技巧</a>
+      <a href="#cheat">速查表</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-badge">AI 编程最佳实践</div>
+    <h1>写出更好的提示词<br>让 <span class="gradient">AI 编程</span> 事半功倍</h1>
+    <p>掌握提示词工程的核心原则和实用技巧，让 AI 编程助手准确理解你的意图，生成高质量代码。</p>
+    <div class="hero-actions">
+      <a href="#compare" class="btn btn-primary">开始学习 ↓</a>
+      <a href="#builder" class="btn btn-outline">提示词构建器</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">20+</div><div class="label">对比案例</div></div>
+      <div class="hero-stat"><div class="num">5</div><div class="label">核心原则</div></div>
+      <div class="hero-stat"><div class="num">4</div><div class="label">场景分类</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>对比案例：好提示词 vs 坏提示词</h2>
+      <p>通过真实场景对比，直观感受提示词质量的差距</p>
+    </div>
+    <div class="compare-tabs" id="compareTabs"></div>
+    <div class="compare-grid" id="compareGrid"></div>
+  </div>
+</section>
+
+<!-- CLEAR -->
+<section id="clear">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>CLEAR 框架</h2>
+      <p>一套系统化的提示词编写方法论，帮助你写出清晰、有效的提示词</p>
+    </div>
+    <div class="clear-grid reveal" id="clearGrid"></div>
+    <div class="clear-detail" id="clearDetail"></div>
+  </div>
+</section>
+
+<!-- BUILDER -->
+<section id="builder" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>提示词构建器</h2>
+      <p>选择模板或自定义参数，一键生成结构化提示词</p>
+    </div>
+    <div class="template-chips reveal" id="templateChips"></div>
+    <div class="builder-wrap reveal">
+      <div class="builder-form">
+        <h3>自定义参数</h3>
+        <div class="form-group">
+          <label>任务类型</label>
+          <select id="bType">
+            <option value="generate">代码生成</option>
+            <option value="debug">调试修复</option>
+            <option value="refactor">重构优化</option>
+            <option value="test">测试编写</option>
+            <option value="review">代码审查</option>
+            <option value="explain">代码解释</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>编程语言 / 框架</label>
+          <input type="text" id="bLang" placeholder="例如: TypeScript, React, Python, Go">
+        </div>
+        <div class="form-group">
+          <label>具体需求描述</label>
+          <textarea id="bDesc" placeholder="描述你想要实现的功能或需要解决的问题..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>约束条件（可选）</label>
+          <textarea id="bConstraint" rows="2" placeholder="性能要求、兼容性、代码风格等约束..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="generatePrompt()">生成提示词</button>
+      </div>
+      <div class="builder-output">
+        <h3>生成结果 <button class="copy-btn" id="copyBtn" onclick="copyResult()">复制</button></h3>
+        <div class="builder-result" id="builderResult">← 填写左侧参数后点击"生成提示词"，或直接选择上方模板快速开始。</div>
+        <div class="quality-bar" id="qualityBar" style="display:none">
+          <div class="quality-bar-label"><span>提示词质量评分</span><span id="qualityScore"></span></div>
+          <div class="quality-bar-track"><div class="quality-bar-fill" id="qualityFill"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPS -->
+<section id="tips">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>实用技巧库</h2>
+      <p>按场景分类的提示词技巧，即学即用</p>
+    </div>
+    <div class="tips-tabs reveal" id="tipsTabs"></div>
+    <div class="tips-grid reveal" id="tipsGrid"></div>
+  </div>
+</section>
+
+<!-- CHEAT SHEET -->
+<section id="cheat" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>速查表</h2>
+      <p>核心规则一目了然，收藏备查</p>
+    </div>
+    <div class="cheat-grid reveal">
+      <div class="cheat-card">
+        <h4>✅ 应该做</h4>
+        <ul class="cheat-list">
+          <li>明确指定编程语言、框架版本和运行环境</li>
+          <li>提供输入输出的具体示例</li>
+          <li>说明边界条件和错误处理方式</li>
+          <li>分步骤拆解复杂任务</li>
+          <li>指定代码风格和命名规范</li>
+          <li>给出性能和安全方面的约束</li>
+          <li>提供相关的上下文代码片段</li>
+          <li>说明期望的返回格式和数据结构</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>❌ 不应该做</h4>
+        <ul class="cheat-list">
+          <li>用模糊的词汇如"优化一下"、"改好一点"</li>
+          <li>一次性提出多个不相关的需求</li>
+          <li>假设 AI 知道你的项目上下文</li>
+          <li>忽略错误处理和边界条件</li>
+          <li>不指定任何约束就要求"最佳实践"</li>
+          <li>复制粘贴大段代码却不说明问题所在</li>
+          <li>用否定句描述需求（说清你要什么，而非不要什么）</li>
+          <li>期待一次交互就得到完美结果</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>💡 高级技巧</h4>
+        <ul class="cheat-list">
+          <li>使用 Few-shot 模式提供 2-3 个示例</li>
+          <li>用角色设定引导 AI（"你是一个资深后端工程师"）</li>
+          <li>Chain-of-Thought: 要求 AI 先分析再实现</li>
+          <li>迭代优化：基于结果逐步调整提示词</li>
+          <li>请求 AI 解释其设计决策和权衡</li>
+          <li>对不确定的部分让 AI 提出澄清问题</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>📐 提示词结构模板</h4>
+        <ul class="cheat-list">
+          <li><strong>角色</strong>：你是一个 [角色]</li>
+          <li><strong>上下文</strong>：当前项目使用 [技术栈]</li>
+          <li><strong>任务</strong>：请帮我 [具体任务]</li>
+          <li><strong>输入</strong>：输入数据格式为 [格式]</li>
+          <li><strong>输出</strong>：期望输出 [格式和要求]</li>
+          <li><strong>约束</strong>：需要满足 [约束条件]</li>
+          <li><strong>示例</strong>：例如 [输入] → [输出]</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>AI 编程提示词工程交互式指南 · 让每一次与 AI 的对话都更高效</p>
+</footer>
+
+<script>
+/* ===== DATA ===== */
+const COMPARISONS = [
+  {
+    id: "api", label: "API 开发",
+    bad: {
+      prompt: "帮我写一个 API",
+      reason: "没有指定语言、框架、功能、数据模型，AI 无从下手"
+    },
+    good: {
+      prompt: `请用 Node.js + Express + TypeScript 编写一个 RESTful API 端点：
+
+功能：用户注册
+路径：POST /api/v1/auth/register
+请求体：{ email: string, password: string, name: string }
+要求：
+- 使用 zod 做输入校验
+- 密码用 bcrypt 加密（salt rounds = 12）
+- 检查邮箱是否已注册，若已注册返回 409
+- 成功返回 201 和 JWT token
+- 统一错误响应格式 { error: string, code: number }`,
+      reason: "明确了技术栈、路径、数据结构、校验方式和错误处理"
+    }
+  },
+  {
+    id: "debug", label: "调试问题",
+    bad: {
+      prompt: "我的代码报错了，帮我看看",
+      reason: "没有给出代码、错误信息、运行环境，无法定位问题"
+    },
+    good: {
+      prompt: `我的 React 18 应用在以下场景下出现无限重渲染：
+
+环境：React 18.2 + Next.js 14 + TypeScript
+错误现象：打开用户详情页后，控制台不断输出 "Rendering UserProfile"，内存持续增长
+
+相关代码：
+\`\`\`tsx
+function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetch(\`/api/users/\${userId}\`)
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }); // ← 怀疑问题在这里
+
+  console.log("Rendering UserProfile");
+  return <div>{user?.name}</div>;
+}
+\`\`\`
+
+请分析根因并给出修复方案。`,
+      reason: "提供了完整的上下文：环境、现象、代码、初步判断"
+    }
+  },
+  {
+    id: "refactor", label: "重构代码",
+    bad: {
+      prompt: "帮我优化这段代码，让它更好",
+      reason: ""更好"的标准是什么？性能？可读性？可维护性？"
+    },
+    good: {
+      prompt: `请重构以下 Python 函数，目标：
+1. 消除嵌套超过 3 层的 if-else
+2. 提取重复逻辑为独立函数
+3. 添加类型注解
+4. 遵循 PEP 8 命名规范
+
+当前代码：
+\`\`\`python
+def process(data):
+    result = []
+    for item in data:
+        if item['type'] == 'A':
+            if item['status'] == 'active':
+                if item['score'] > 80:
+                    result.append({'id': item['id'], 'grade': 'excellent'})
+                else:
+                    result.append({'id': item['id'], 'grade': 'good'})
+            else:
+                result.append({'id': item['id'], 'grade': 'inactive'})
+        elif item['type'] == 'B':
+            if item['status'] == 'active':
+                if item['score'] > 90:
+                    result.append({'id': item['id'], 'grade': 'excellent'})
+                else:
+                    result.append({'id': item['id'], 'grade': 'good'})
+    return result
+\`\`\`
+
+保持功能不变，可以使用策略模式或早返回模式。`,
+      reason: "明确了重构目标、具体标准、允许的模式，保持功能不变"
+    }
+  },
+  {
+    id: "test", label: "编写测试",
+    bad: {
+      prompt: "帮我写单元测试",
+      reason: "测什么？用什么框架？覆盖哪些场景？全都没有说"
+    },
+    good: {
+      prompt: `请为以下 Go 函数编写表驱动测试（table-driven test）：
+
+\`\`\`go
+func ParseDuration(input string) (time.Duration, error) {
+    // 支持格式: "30s", "5m", "2h", "1d", "500ms"
+    // 无效输入返回 error
+}
+\`\`\`
+
+测试要求：
+- 使用 testing 标准库 + testify/assert
+- 覆盖场景：正常值（各单位）、边界值（0s, 最大值）、无效输入（空字符串、负数、无单位、未知单位）
+- 使用 t.Run 子测试命名
+- 测试函数命名: TestParseDuration`,
+      reason: "指定了测试框架、覆盖场景、命名规范、测试模式"
+    }
+  },
+  {
+    id: "component", label: "组件开发",
+    bad: {
+      prompt: "写一个下拉菜单组件",
+      reason: "什么框架？什么样式？单选多选？有无搜索？完全不清楚"
+    },
+    good: {
+      prompt: `请用 React + TypeScript 编写一个可搜索的多选下拉组件：
+
+Props 接口：
+- options: { label: string; value: string }[]
+- selected: string[]
+- onChange: (values: string[]) => void
+- placeholder?: string
+- maxSelect?: number（最多可选数量）
+
+功能要求：
+- 点击展开/收起选项列表
+- 顶部搜索框过滤选项（模糊匹配）
+- 已选项显示为 Tag，可单独删除
+- 支持键盘导航（上下箭头 + Enter 选中）
+- 点击外部区域自动关闭
+- 达到 maxSelect 后禁用未选选项
+
+样式：使用 CSS Modules，不依赖 UI 库
+可访问性：aria-expanded, aria-selected, role="listbox"`,
+      reason: "完整定义了接口、功能、交互、样式方案和可访问性要求"
+    }
+  }
+];
+
+const CLEAR_DATA = [
+  {
+    letter: "C", title: "Context", sub: "上下文",
+    desc: "提供项目背景、技术栈、运行环境等上下文信息。AI 不了解你的项目，好的上下文能帮助它快速进入状态。",
+    example: `// 好的上下文示例：
+我们的项目是一个电商后台管理系统。
+技术栈：Vue 3 + Vite + Pinia + Element Plus
+Node 版本：18.x，部署在 Docker 容器中
+目前有约 200 个 API 端点，使用 RESTful 风格。
+
+// 关键点：
+// - 说明项目类型和规模
+// - 列出技术栈和版本
+// - 描述部署环境
+// - 提供相关的架构信息`
+  },
+  {
+    letter: "L", title: "Language", sub: "精确表达",
+    desc: "使用精确的技术术语和具体的描述。避免模糊词汇，用数字和例子代替抽象要求。",
+    example: `// 模糊表达 ❌
+"让这个查询快一点"
+
+// 精确表达 ✅
+"优化这个 SQL 查询，当前在 10 万行数据下需要 3.2s，
+目标降低到 500ms 以内。
+可以考虑：添加复合索引、改写子查询为 JOIN、
+使用 EXPLAIN ANALYZE 分析执行计划。"
+
+// 关键点：
+// - 给出具体的量化指标
+// - 使用准确的技术术语
+// - 列出可接受的解决方向`
+  },
+  {
+    letter: "E", title: "Examples", sub: "提供示例",
+    desc: "通过输入输出示例、代码片段或期望格式来减少歧义。Few-shot 示例能显著提升 AI 的理解准确度。",
+    example: `// Few-shot 示例：
+请实现一个 slugify 函数，将中文标题转为 URL 友好格式。
+
+示例：
+  "深入理解 TypeScript" → "shen-ru-li-jie-typescript"
+  "2024年前端趋势" → "2024-nian-qian-duan-qu-shi"
+  "Hello World! 你好" → "hello-world-ni-hao"
+
+规则：
+1. 中文转拼音（不含声调）
+2. 英文转小写
+3. 空格和特殊字符替换为 "-"
+4. 连续 "-" 合并为一个
+5. 首尾不含 "-"`
+  },
+  {
+    letter: "A", title: "Audience", sub: "明确受众",
+    desc: "指明代码的使用场景和读者。面向初学者的教学代码和生产环境代码有完全不同的写法。",
+    example: `// 面向初学者的教学代码：
+"请用最简单易懂的方式实现二叉树遍历，
+每一步都加上中文注释说明原理，
+变量名要有描述性。这是用于
+算法入门课程的教学材料。"
+
+// 面向生产环境：
+"请实现一个高并发安全的缓存模块，
+要求：读写锁优化、LRU 淘汰策略、
+指标埋点、优雅降级。
+团队使用 Go 1.21，遵循 uber-go/guide 规范。
+该模块将处理约 10k QPS 的读请求。"`
+  },
+  {
+    letter: "R", title: "Requirements", sub: "明确要求",
+    desc: "清晰列出功能需求、非功能需求和约束条件。好的需求是可验证的、具体的，不留歧义。",
+    example: `// 结构化的需求描述：
+功能需求：
+1. 支持 JWT 和 Session 两种认证方式
+2. Token 过期时间可配置（默认 7 天）
+3. 支持 refresh token 自动续期
+
+非功能需求：
+- 性能：认证中间件延迟 < 5ms (P99)
+- 安全：防止 timing attack，使用 constant-time 比较
+- 兼容：支持 Node.js 18+ 和 Bun 1.0+
+
+约束条件：
+- 不引入新的外部依赖
+- 与现有的 Express 中间件链兼容
+- 日志格式遵循现有的 structured logging 规范`
+  }
+];
+
+const TIPS_DATA = {
+  code: {
+    label: "代码生成", icon: "⚡",
+    tips: [
+      { title: "先定义接口，再实现逻辑", desc: "让 AI 先生成 TypeScript 接口/类型定义，确认数据结构正确后再实现业务逻辑，分步骤可以减少返工。", example: `"请先为用户订单系统定义所有的 TypeScript 接口，包括 Order, OrderItem, Payment, ShippingInfo。暂不写实现代码。"` },
+      { title: "指定设计模式", desc: "明确告诉 AI 使用哪种设计模式，避免它随意选择不适合当前场景的方案。", example: `"请用工厂模式实现消息通知系统，支持 Email、SMS、Push 三种渠道，后续可以方便地扩展新渠道。"` },
+      { title: "给出函数签名", desc: "预先定义好函数签名可以大幅降低 AI 理解偏差，让生成的代码能直接融入现有代码库。", example: `"请实现以下函数：\nasync function batchProcess<T>(\n  items: T[],\n  processor: (item: T) => Promise<void>,\n  options: { concurrency: number; retries: number }\n): Promise<BatchResult<T>>"` },
+      { title: "请求 AI 给出多种方案", desc: "对于有多种实现方式的场景，让 AI 列出 2-3 种方案并分析各自的优劣势，帮助你做出决策。", example: `"实现 React 中的全局状态管理，请给出 3 种方案（Context、Zustand、Jotai），分别说明适用场景和性能差异。"` }
+    ]
+  },
+  debug: {
+    label: "调试修复", icon: "🔍",
+    tips: [
+      { title: "提供完整的错误栈", desc: "不要只发错误消息，把完整的 stack trace 贴给 AI。函数调用链是定位问题的关键线索。", example: `"运行 npm run build 时出现以下错误：\n[完整 stack trace]\n\n环境：Node 18.17, Next.js 14.0.4\n本地开发正常，CI 环境构建失败"` },
+      { title: "描述预期 vs 实际行为", desc: "清晰区分"我期望的行为"和"实际的行为"，让 AI 快速理解问题本质。", example: `"预期行为：点击提交按钮后表单数据发送到 /api/submit，页面跳转到成功页\n实际行为：点击后无反应，网络面板无请求，控制台无报错"` },
+      { title: "说明已尝试的方案", desc: "告诉 AI 你已经试过什么方案和结果，避免它给出你已排除的建议，节省来回时间。", example: `"问题：Redis 连接频繁超时\n已尝试：\n1. 增加超时时间到 5s → 仍然超时\n2. 检查网络延迟 < 1ms → 正常\n3. 查看 Redis INFO → connected_clients: 450"` },
+      { title: "最小复现代码", desc: "提供能复现问题的最小代码片段，去掉所有无关代码。这既帮助 AI 聚焦问题，也锻炼你的排查能力。", example: `"以下最小代码可复现此 bug：\n\`\`\`js\nconst arr = [1, 2, 3];\narr.forEach(async (n) => {\n  await delay(n * 100);\n  console.log(n);\n});\nconsole.log('done');\n// 输出: done, 1, 2, 3（期望 1,2,3,done）\n\`\`\`"` }
+    ]
+  },
+  refactor: {
+    label: "重构优化", icon: "♻️",
+    tips: [
+      { title: "量化优化目标", desc: "用数字定义优化目标（响应时间、内存占用、包体积等），让 AI 给出有针对性的方案。", example: `"当前首页 LCP = 4.2s，FCP = 2.1s。\n目标：LCP < 2.5s, FCP < 1.5s。\n当前 bundle 分析：lodash 占 72KB、moment 占 67KB。\n请给出具体优化步骤。"` },
+      { title: "保持行为不变", desc: "重构的核心原则是保持外部行为不变。明确告诉 AI 哪些行为是必须保持的契约。", example: `"请重构 UserService 类，但必须保证：\n1. 所有公开方法签名不变\n2. 现有的 47 个单元测试全部通过\n3. API 响应格式完全一致\n只做内部实现的优化。"` },
+      { title: "分阶段重构", desc: "大规模重构要分步骤进行。让 AI 给出分阶段计划，每一步都是独立可验证的。", example: `"请制定将 jQuery 代码迁移到 Vue 3 的分阶段计划：\n阶段 1: 抽离数据层\n阶段 2: 封装 Vue 组件（与 jQuery 共存）\n阶段 3: 逐步替换页面\n每阶段需确保功能可用。"` },
+      { title: "要求解释权衡", desc: "让 AI 解释为什么选择某种重构方案，以及这样做的 trade-off 是什么。", example: `"将这个递归实现改为迭代实现。请说明：\n1. 性能提升预估\n2. 代码可读性的变化\n3. 是否存在功能差异的边界情况\n4. 在什么条件下应保留递归版本"` }
+    ]
+  },
+  test: {
+    label: "测试编写", icon: "🧪",
+    tips: [
+      { title: "明确测试范围", desc: "说清是单元测试、集成测试还是 E2E 测试。不同层级的测试有完全不同的关注点和写法。", example: `"请为 PaymentService.processPayment() 编写单元测试：\n- Mock 掉 StripeClient 和 OrderRepository\n- 只测试 PaymentService 自身的分支逻辑\n- 不涉及数据库和网络调用"` },
+      { title: "列出边界场景", desc: "主动列出需要覆盖的边界条件，或者让 AI 先列出场景清单供你确认后再写测试代码。", example: `"请先列出 parseEmail() 函数需要测试的所有边界场景（别写代码），包括：\n- 有效格式变体\n- 常见无效格式\n- Unicode 和特殊字符\n- 极端长度\n我确认后再写测试。"` },
+      { title: "指定测试模式", desc: "告诉 AI 使用什么测试模式（表驱动、参数化、Given-When-Then），保持测试代码风格统一。", example: `"使用 Jest + React Testing Library，采用 Given-When-Then 模式：\n\ndescribe('LoginForm', () => {\n  it('given valid credentials, when submit, then redirect to dashboard', () => {\n    // Given\n    // When\n    // Then\n  });\n});"` },
+      { title: "要求覆盖错误路径", desc: "很多 AI 默认只生成 happy path 测试。明确要求覆盖错误路径和异常场景。", example: `"除了正常场景，还需要测试：\n- 网络超时（模拟 AbortController）\n- 500 响应的降级处理\n- 并发请求的竞态条件\n- 内存不足时的优雅失败\n每种错误路径至少一个测试用例。"` }
+    ]
+  }
+};
+
+const TEMPLATES = [
+  { id: "feat", label: "新功能开发", type: "generate", lang: "TypeScript + React", desc: "实现一个可复用的数据表格组件，支持排序、筛选和分页", constraint: "使用 CSS Modules，不依赖第三方 UI 库；支持虚拟滚动（数据量可达 10000 行）" },
+  { id: "fix", label: "Bug 修复", type: "debug", lang: "Python 3.11 + FastAPI", desc: "API 在高并发下偶发 502，日志显示 asyncio event loop 阻塞", constraint: "不能更换框架；修复后需通过 locust 压测（500 并发持续 5 分钟）" },
+  { id: "perf", label: "性能优化", type: "refactor", lang: "Go 1.21", desc: "优化图片处理服务的内存占用，当前处理 10MB 图片时内存峰值达到 800MB", constraint: "使用流式处理，内存峰值控制在 100MB 以内；不降低图片质量" },
+  { id: "unit", label: "单元测试", type: "test", lang: "Java 17 + JUnit 5", desc: "为订单计算服务编写单元测试，覆盖折扣、满减、优惠券叠加场景", constraint: "使用参数化测试；Mock 外部依赖；分支覆盖率 > 90%" },
+  { id: "review", label: "代码审查", type: "review", lang: "Rust", desc: "审查以下 Rust 异步代码的正确性、安全性和性能", constraint: "重点关注：生命周期标注、错误处理、unsafe 代码块、死锁风险" },
+  { id: "explain", label: "代码解释", type: "explain", lang: "", desc: "解释以下正则表达式的含义和每个部分的作用", constraint: "用中文逐段分析；给出 3 个匹配和 3 个不匹配的示例" }
+];
+
+/* ===== RENDER: COMPARISONS ===== */
+let currentCompare = 0;
+function renderComparisons() {
+  const tabs = document.getElementById('compareTabs');
+  const grid = document.getElementById('compareGrid');
+  tabs.innerHTML = COMPARISONS.map((c, i) =>
+    `<button class="compare-tab${i === currentCompare ? ' active' : ''}" onclick="switchCompare(${i})">${c.label}</button>`
+  ).join('');
+  const c = COMPARISONS[currentCompare];
+  grid.innerHTML = `
+    <div class="compare-card bad" style="animation-delay:.1s">
+      <div class="compare-label">❌ 不推荐的提示词</div>
+      <div class="compare-body">
+        <pre>${escHtml(c.bad.prompt)}</pre>
+        <div class="compare-why">⚠️ ${escHtml(c.bad.reason)}</div>
+      </div>
+    </div>
+    <div class="compare-card good" style="animation-delay:.2s">
+      <div class="compare-label">✅ 推荐的提示词</div>
+      <div class="compare-body">
+        <pre>${escHtml(c.good.prompt)}</pre>
+        <div class="compare-why">💡 ${escHtml(c.good.reason)}</div>
+      </div>
+    </div>`;
+}
+function switchCompare(i) {
+  currentCompare = i;
+  renderComparisons();
+}
+
+/* ===== RENDER: CLEAR ===== */
+let activeClear = -1;
+function renderClear() {
+  const grid = document.getElementById('clearGrid');
+  grid.innerHTML = CLEAR_DATA.map((c, i) => `
+    <div class="clear-card${i === activeClear ? ' active' : ''}" onclick="toggleClear(${i})">
+      <div class="clear-letter">${c.letter}</div>
+      <div class="clear-title">${c.title}</div>
+      <div class="clear-sub">${c.sub}</div>
+    </div>
+  `).join('');
+  const detail = document.getElementById('clearDetail');
+  if (activeClear >= 0) {
+    const c = CLEAR_DATA[activeClear];
+    detail.className = 'clear-detail show';
+    detail.innerHTML = `
+      <h3>${c.letter} — ${c.title}（${c.sub}）</h3>
+      <p>${c.desc}</p>
+      <div class="clear-example">
+        <div class="clear-example-label">示例</div>
+        <pre>${escHtml(c.example)}</pre>
+      </div>`;
+  } else {
+    detail.className = 'clear-detail';
+  }
+}
+function toggleClear(i) {
+  activeClear = activeClear === i ? -1 : i;
+  renderClear();
+}
+
+/* ===== RENDER: TEMPLATES ===== */
+function renderTemplates() {
+  const el = document.getElementById('templateChips');
+  el.innerHTML = TEMPLATES.map(t =>
+    `<button class="template-chip" onclick="applyTemplate('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+function applyTemplate(id) {
+  const t = TEMPLATES.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('bType').value = t.type;
+  document.getElementById('bLang').value = t.lang;
+  document.getElementById('bDesc').value = t.desc;
+  document.getElementById('bConstraint').value = t.constraint;
+  document.querySelectorAll('.template-chip').forEach(el => {
+    el.classList.toggle('active', el.textContent === t.label);
+  });
+  generatePrompt();
+}
+
+/* ===== RENDER: TIPS ===== */
+let currentTipCat = 'code';
+function renderTips() {
+  const tabs = document.getElementById('tipsTabs');
+  const grid = document.getElementById('tipsGrid');
+  const cats = Object.entries(TIPS_DATA);
+  tabs.innerHTML = cats.map(([k, v]) =>
+    `<button class="tips-tab${k === currentTipCat ? ' active' : ''}" onclick="switchTips('${k}')">${v.icon} ${v.label}</button>`
+  ).join('');
+  const catClass = 'cat-' + currentTipCat;
+  grid.innerHTML = TIPS_DATA[currentTipCat].tips.map(t => `
+    <div class="tip-card ${catClass}">
+      <div class="tip-icon">${TIPS_DATA[currentTipCat].icon}</div>
+      <h4>${escHtml(t.title)}</h4>
+      <p>${escHtml(t.desc)}</p>
+      <div class="tip-example">${escHtml(t.example)}</div>
+    </div>
+  `).join('');
+}
+function switchTips(cat) {
+  currentTipCat = cat;
+  renderTips();
+}
+
+/* ===== PROMPT BUILDER ===== */
+const TYPE_LABELS = { generate: '代码生成', debug: '调试修复', refactor: '重构优化', test: '测试编写', review: '代码审查', explain: '代码解释' };
+const ROLE_MAP = {
+  generate: '一位经验丰富的全栈工程师',
+  debug: '一位擅长排查问题的 Debug 专家',
+  refactor: '一位注重代码质量的架构师',
+  test: '一位测试驱动开发（TDD）专家',
+  review: '一位严谨的高级代码审查者',
+  explain: '一位擅长深入浅出的技术导师'
+};
+const TASK_VERB = {
+  generate: '请帮我实现以下功能',
+  debug: '请帮我分析并修复以下问题',
+  refactor: '请帮我重构优化以下代码',
+  test: '请帮我编写以下测试',
+  review: '请帮我审查以下代码',
+  explain: '请帮我解释以下代码'
+};
+
+function generatePrompt() {
+  const type = document.getElementById('bType').value;
+  const lang = document.getElementById('bLang').value.trim();
+  const desc = document.getElementById('bDesc').value.trim();
+  const constraint = document.getElementById('bConstraint').value.trim();
+
+  if (!desc) {
+    document.getElementById('builderResult').textContent = '请至少填写"具体需求描述"后再生成。';
+    document.getElementById('qualityBar').style.display = 'none';
+    return;
+  }
+
+  let lines = [];
+  lines.push(`## 角色`);
+  lines.push(`你是${ROLE_MAP[type]}。\n`);
+
+  if (lang) {
+    lines.push(`## 技术上下文`);
+    lines.push(`技术栈：${lang}\n`);
+  }
+
+  lines.push(`## 任务`);
+  lines.push(`${TASK_VERB[type]}：\n${desc}\n`);
+
+  if (constraint) {
+    lines.push(`## 约束条件`);
+    constraint.split(/[,，;；\n]/).map(s => s.trim()).filter(Boolean).forEach(s => {
+      lines.push(`- ${s}`);
+    });
+    lines.push('');
+  }
+
+  lines.push(`## 输出要求`);
+  if (type === 'generate') {
+    lines.push(`1. 先给出设计思路概述（3-5 句话）`);
+    lines.push(`2. 再给出完整的可运行代码`);
+    lines.push(`3. 包含必要的注释说明关键设计决策`);
+    lines.push(`4. 最后列出可能的后续优化方向`);
+  } else if (type === 'debug') {
+    lines.push(`1. 分析可能的根本原因（列出 Top 3）`);
+    lines.push(`2. 给出修复方案和代码`);
+    lines.push(`3. 解释为什么会出现这个问题`);
+    lines.push(`4. 建议如何预防类似问题再次发生`);
+  } else if (type === 'refactor') {
+    lines.push(`1. 指出当前代码的具体问题`);
+    lines.push(`2. 给出重构后的完整代码`);
+    lines.push(`3. 说明改动的理由和带来的收益`);
+    lines.push(`4. 确保重构前后行为完全一致`);
+  } else if (type === 'test') {
+    lines.push(`1. 先列出测试场景清单`);
+    lines.push(`2. 实现每个场景的测试用例`);
+    lines.push(`3. 包含正常路径和错误路径`);
+    lines.push(`4. 添加有描述性的测试命名`);
+  } else if (type === 'review') {
+    lines.push(`1. 按严重程度分类：🔴 严重 / 🟡 建议 / 🟢 优化`);
+    lines.push(`2. 每条意见标注具体的代码行`);
+    lines.push(`3. 给出修改建议和示例代码`);
+    lines.push(`4. 总结整体评价和改进优先级`);
+  } else {
+    lines.push(`1. 逐段解释代码的作用`);
+    lines.push(`2. 说明关键的设计模式和算法`);
+    lines.push(`3. 用通俗类比帮助理解复杂概念`);
+    lines.push(`4. 标注潜在的注意事项`);
+  }
+
+  const result = lines.join('\n');
+  document.getElementById('builderResult').textContent = result;
+
+  // Quality score
+  let score = 30;
+  if (lang) score += 15;
+  if (desc.length > 30) score += 15;
+  if (desc.length > 80) score += 10;
+  if (constraint) score += 15;
+  if (constraint.length > 30) score += 10;
+  if (desc.includes('例') || desc.includes('示例') || desc.includes('example')) score += 5;
+  score = Math.min(score, 100);
+
+  const bar = document.getElementById('qualityBar');
+  bar.style.display = 'block';
+  const fill = document.getElementById('qualityFill');
+  const scoreEl = document.getElementById('qualityScore');
+  scoreEl.textContent = score + ' / 100';
+  fill.style.width = score + '%';
+  fill.style.background = score >= 80 ? 'var(--c-success)' : score >= 50 ? 'var(--c-accent)' : 'var(--c-danger)';
+}
+
+function copyResult() {
+  const text = document.getElementById('builderResult').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '已复制 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+/* ===== SCROLL REVEAL ===== */
+function initReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+/* ===== NAV ACTIVE ===== */
+function initNavHighlight() {
+  const sections = ['compare', 'clear', 'builder', 'tips', 'cheat'];
+  const links = document.querySelectorAll('.nav-links a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-80px 0px -60% 0px' });
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+}
+
+/* ===== UTIL ===== */
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderComparisons();
+  renderClear();
+  renderTemplates();
+  renderTips();
+  initReveal();
+  initNavHighlight();
+});
+</script>
+</body>
+</html>

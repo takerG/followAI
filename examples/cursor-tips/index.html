@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor IDE 高效编程指南 — AI 辅助编码最佳实践</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0d1117;
+  --bg-secondary:#161b22;
+  --bg-tertiary:#1c2333;
+  --bg-card:#21262d;
+  --bg-hover:#30363d;
+  --border:#30363d;
+  --border-active:#58a6ff;
+  --text-primary:#e6edf3;
+  --text-secondary:#8b949e;
+  --text-muted:#6e7681;
+  --accent:#58a6ff;
+  --accent-glow:rgba(88,166,255,.15);
+  --green:#3fb950;
+  --purple:#bc8cff;
+  --orange:#f0883e;
+  --pink:#f778ba;
+  --yellow:#d29922;
+  --red:#f85149;
+  --cyan:#39d2c0;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+  --transition:0.3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji";
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ===== Animated Background ===== */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(88,166,255,.08),transparent),
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:100% 100%,60px 60px,60px 60px;
+  opacity:.3;
+}
+
+/* ===== Container ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* ===== Hero ===== */
+.hero{
+  padding:100px 0 60px;
+  text-align:center;
+  position:relative;
+}
+.hero::before{
+  content:'';position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(88,166,255,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:20px;
+  background:var(--accent-glow);border:1px solid rgba(88,166,255,.25);
+  color:var(--accent);font-size:.85rem;font-weight:500;
+  margin-bottom:24px;
+  animation:fadeInDown .6s ease-out;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{
+  font-size:clamp(2.2rem,5vw,3.6rem);
+  font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--text-primary) 0%,var(--accent) 50%,var(--purple) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:fadeInDown .6s ease-out .1s both;
+  line-height:1.2;
+  margin-bottom:20px;
+}
+.hero p{
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--text-secondary);
+  max-width:640px;margin:0 auto;
+  animation:fadeInDown .6s ease-out .2s both;
+}
+.hero-stats{
+  display:flex;justify-content:center;gap:40px;margin-top:40px;
+  animation:fadeInDown .6s ease-out .3s both;
+}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:2rem;font-weight:800;color:var(--accent)}
+.hero-stat .label{font-size:.85rem;color:var(--text-muted);margin-top:4px}
+
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Tabs ===== */
+.tabs-section{padding:20px 0 80px}
+.tab-nav{
+  display:flex;gap:6px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:0;
+  margin-bottom:40px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex-shrink:0;
+  padding:14px 22px;
+  background:none;border:none;
+  color:var(--text-secondary);
+  font-size:.95rem;font-weight:600;
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:var(--transition);
+  white-space:nowrap;
+  position:relative;
+}
+.tab-btn:hover{color:var(--text-primary);background:var(--bg-secondary);border-radius:var(--radius-sm) var(--radius-sm) 0 0}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn .tab-icon{margin-right:8px;font-size:1.1rem}
+.tab-btn .tab-count{
+  margin-left:8px;font-size:.75rem;
+  background:var(--bg-hover);color:var(--text-muted);
+  padding:2px 8px;border-radius:10px;
+}
+
+/* ===== Tab Panels ===== */
+.tab-panel{display:none;animation:fadeIn .4s ease-out}
+.tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.panel-header{margin-bottom:32px}
+.panel-header h2{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+.panel-header p{color:var(--text-secondary);font-size:1.05rem}
+
+/* ===== Tip Cards ===== */
+.tips-grid{display:grid;gap:20px}
+.tip-card{
+  background:var(--bg-secondary);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:28px;
+  transition:var(--transition);
+  cursor:default;
+  position:relative;
+  overflow:hidden;
+}
+.tip-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--purple));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.tip-card:hover{
+  border-color:var(--border-active);
+  transform:translateY(-2px);
+  box-shadow:var(--shadow),0 0 30px rgba(88,166,255,.06);
+}
+.tip-card:hover::before{transform:scaleX(1)}
+.tip-card-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.tip-icon{
+  width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;flex-shrink:0;
+}
+.tip-card-header h3{font-size:1.15rem;font-weight:700;line-height:1.4}
+.tip-card-header .tip-level{
+  margin-left:auto;font-size:.75rem;font-weight:600;
+  padding:3px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;
+}
+.level-beginner{background:rgba(63,185,80,.12);color:var(--green)}
+.level-intermediate{background:rgba(88,166,255,.12);color:var(--accent)}
+.level-advanced{background:rgba(188,140,255,.12);color:var(--purple)}
+.level-pro{background:rgba(240,136,62,.12);color:var(--orange)}
+
+.tip-body{color:var(--text-secondary);font-size:.95rem;line-height:1.8}
+.tip-body p{margin-bottom:12px}
+.tip-body p:last-child{margin-bottom:0}
+
+/* ===== Kbd / Code ===== */
+kbd{
+  display:inline-block;
+  padding:2px 8px;margin:0 2px;
+  background:var(--bg-tertiary);
+  border:1px solid var(--border);
+  border-bottom-width:2px;
+  border-radius:5px;
+  font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:.82rem;
+  color:var(--text-primary);
+  white-space:nowrap;
+}
+code{
+  padding:2px 7px;
+  background:var(--bg-tertiary);
+  border-radius:5px;
+  font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:.85rem;
+  color:var(--cyan);
+}
+
+/* ===== Code Blocks ===== */
+.code-block{
+  background:var(--bg-primary);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:16px 20px;
+  margin:12px 0;
+  font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:.85rem;
+  line-height:1.6;
+  overflow-x:auto;
+  color:var(--text-primary);
+  position:relative;
+}
+.code-block .comment{color:var(--text-muted)}
+.code-block .keyword{color:var(--purple)}
+.code-block .string{color:var(--green)}
+.code-block .attr{color:var(--accent)}
+
+/* ===== Shortcut Table ===== */
+.shortcut-list{display:grid;gap:10px;margin:12px 0}
+.shortcut-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;
+  background:var(--bg-primary);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  transition:var(--transition);
+}
+.shortcut-row:hover{border-color:var(--accent);background:var(--bg-tertiary)}
+.shortcut-desc{color:var(--text-secondary);font-size:.9rem}
+.shortcut-keys{display:flex;gap:4px;flex-shrink:0;margin-left:12px}
+
+/* ===== Highlight Box ===== */
+.highlight-box{
+  background:var(--accent-glow);
+  border:1px solid rgba(88,166,255,.2);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  padding:16px 20px;
+  margin:16px 0;
+  font-size:.92rem;
+  color:var(--text-secondary);
+}
+.highlight-box strong{color:var(--accent)}
+.highlight-box.warn{
+  background:rgba(210,153,34,.08);
+  border-color:rgba(210,153,34,.2);
+  border-left-color:var(--yellow);
+}
+.highlight-box.warn strong{color:var(--yellow)}
+.highlight-box.success{
+  background:rgba(63,185,80,.08);
+  border-color:rgba(63,185,80,.2);
+  border-left-color:var(--green);
+}
+.highlight-box.success strong{color:var(--green)}
+
+/* ===== Step list ===== */
+.step-list{counter-reset:steps;margin:16px 0}
+.step-item{
+  display:flex;gap:16px;align-items:flex-start;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+  counter-increment:steps;
+}
+.step-item:last-child{border-bottom:none}
+.step-item::before{
+  content:counter(steps);
+  flex-shrink:0;
+  width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-glow);
+  border:1px solid rgba(88,166,255,.25);
+  border-radius:50%;
+  font-size:.8rem;font-weight:700;color:var(--accent);
+}
+.step-item .step-content{color:var(--text-secondary);font-size:.93rem}
+.step-item .step-content strong{color:var(--text-primary)}
+
+/* ===== Tag ===== */
+.tag{
+  display:inline-block;padding:2px 10px;margin:2px;
+  background:var(--bg-hover);border-radius:6px;
+  font-size:.8rem;color:var(--text-secondary);
+}
+
+/* ===== Footer ===== */
+.footer{
+  text-align:center;padding:40px 0;
+  border-top:1px solid var(--border);
+  color:var(--text-muted);font-size:.85rem;
+  margin-top:20px;
+}
+.footer a{color:var(--accent);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .hero{padding:72px 0 40px}
+  .hero-stats{gap:24px}
+  .hero-stat .num{font-size:1.5rem}
+  .tab-btn{padding:12px 16px;font-size:.88rem}
+  .tab-btn .tab-count{display:none}
+  .tip-card{padding:20px}
+  .tip-card-header{flex-wrap:wrap}
+  .tip-card-header .tip-level{margin-left:0;margin-top:4px}
+  .shortcut-row{flex-direction:column;align-items:flex-start;gap:8px}
+  .shortcut-keys{margin-left:0}
+  .container{padding:0 16px}
+}
+@media(max-width:480px){
+  .hero h1{font-size:1.8rem}
+  .hero-stats{flex-direction:column;gap:16px}
+  .tab-nav{gap:2px}
+  .tab-btn{padding:10px 12px;font-size:.82rem}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="dot"></span>2025 最新版 Cursor 实战指南</div>
+    <h1>掌握 Cursor IDE<br>释放 AI 编程潜力</h1>
+    <p>从快捷键到高级工作流，系统性地提升你的 AI 辅助编码效率。不只是工具使用指南，更是一套完整的 AI 编程思维框架。</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">40+</div><div class="label">实用技巧</div></div>
+      <div class="hero-stat"><div class="num">4</div><div class="label">核心主题</div></div>
+      <div class="hero-stat"><div class="num">10x</div><div class="label">效率提升</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Main Content ===== -->
+<main class="tabs-section">
+  <div class="container">
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" role="tablist" aria-label="技巧分类">
+      <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-shortcuts" data-tab="shortcuts">
+        <span class="tab-icon">&#9000;</span>快捷键精通<span class="tab-count">12</span>
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-ai" data-tab="ai">
+        <span class="tab-icon">&#128172;</span>AI 对话技巧<span class="tab-count">10</span>
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-workflow" data-tab="workflow">
+        <span class="tab-icon">&#9881;</span>工作流优化<span class="tab-count">10</span>
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-advanced" data-tab="advanced">
+        <span class="tab-icon">&#128640;</span>高级技巧<span class="tab-count">10</span>
+      </button>
+    </nav>
+
+    <!-- ===== Panel 1: Shortcuts ===== -->
+    <div class="tab-panel active" id="panel-shortcuts" role="tabpanel">
+      <div class="panel-header reveal">
+        <h2>&#9000; 快捷键精通</h2>
+        <p>熟练掌握核心快捷键是高效使用 Cursor 的基础。以下快捷键按使用频率排列，macOS 与 Windows/Linux 快捷键均有标注。</p>
+      </div>
+
+      <div class="tips-grid">
+        <!-- Card 1 -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(88,166,255,.12);color:var(--accent)">&#9997;</div>
+            <h3>内联编辑 — 最常用的 AI 交互</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>内联编辑是 Cursor 最核心的功能之一。选中代码后按下快捷键，直接在编辑器内描述你想要的修改，AI 会生成 diff 供你审核。</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">打开内联编辑（Edit）</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>K</kbd> / <kbd>Ctrl</kbd><kbd>K</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">接受 AI 建议</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Y</kbd> / <kbd>Ctrl</kbd><kbd>Y</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">拒绝 AI 建议</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>N</kbd> / <kbd>Ctrl</kbd><kbd>N</kbd></span>
+              </div>
+            </div>
+            <div class="highlight-box">
+              <strong>Pro Tip:</strong> 先选中目标代码再按 <kbd>Cmd</kbd><kbd>K</kbd>，AI 会聚焦在选中区域进行修改，上下文更精确，结果更好。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(63,185,80,.12);color:var(--green)">&#128161;</div>
+            <h3>Tab 智能补全 — AI 的读心术</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>Cursor 的 Tab 补全远超传统补全，它能预测你接下来要写的多行代码，甚至跨函数补全。</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">接受补全建议</span>
+                <span class="shortcut-keys"><kbd>Tab</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">部分接受（逐词）</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>&#8594;</kbd> / <kbd>Ctrl</kbd><kbd>&#8594;</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">忽略建议继续输入</span>
+                <span class="shortcut-keys"><kbd>Esc</kbd></span>
+              </div>
+            </div>
+            <div class="highlight-box success">
+              <strong>最佳实践:</strong> 写一个清晰的函数签名或注释，然后停顿一下——Tab 补全经常能一次性生成完整的实现逻辑。利用逐词接受来精确控制采纳的内容。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(188,140,255,.12);color:var(--purple)">&#128269;</div>
+            <h3>AI 聊天面板 — 你的编程伙伴</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>聊天面板适合进行较复杂的讨论：理解架构、调试问题、设计方案等。它与编辑器深度集成，可以直接应用代码修改。</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">打开 / 关闭 AI 聊天面板</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>L</kbd> / <kbd>Ctrl</kbd><kbd>L</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">新建聊天会话</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>L</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">将选中代码添加到聊天</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>L</kbd>（选中后）</span>
+              </div>
+            </div>
+            <p>聊天面板中 AI 生成的代码块可以一键应用到编辑器，无需手动复制粘贴。</p>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(240,136,62,.12);color:var(--orange)">&#128736;</div>
+            <h3>Composer — 多文件 AI 编辑利器</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>Composer（Agent 模式）可以同时理解和修改多个文件，非常适合跨文件的重构和功能开发。</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">打开 Composer</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>I</kbd> / <kbd>Ctrl</kbd><kbd>I</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">全部接受修改</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>Enter</kbd></span>
+              </div>
+            </div>
+            <div class="highlight-box warn">
+              <strong>注意:</strong> Composer 会同时修改多个文件，使用前建议先 commit 当前修改。仔细审查每个文件的 diff 再接受，养成小步提交的习惯。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(57,210,192,.12);color:var(--cyan)">&#128196;</div>
+            <h3>导航与文件操作快捷键</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>这些 VS Code 继承的快捷键在 Cursor 中同样关键，配合 AI 功能形成完整工作流：</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">快速打开文件</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>P</kbd> / <kbd>Ctrl</kbd><kbd>P</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">命令面板</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>P</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">全局搜索</span>
+                <span class="shortcut-keys"><kbd>Cmd</kbd><kbd>Shift</kbd><kbd>F</kbd></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">跳转到符号定义</span>
+                <span class="shortcut-keys"><kbd>F12</kbd> / <kbd>Cmd</kbd> + 点击</span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">查看所有引用</span>
+                <span class="shortcut-keys"><kbd>Shift</kbd><kbd>F12</kbd></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel 2: AI Conversation ===== -->
+    <div class="tab-panel" id="panel-ai" role="tabpanel">
+      <div class="panel-header reveal">
+        <h2>&#128172; AI 对话技巧</h2>
+        <p>与 AI 沟通的质量直接决定输出质量。掌握以下技巧，让 AI 真正成为你的得力编程助手。</p>
+      </div>
+
+      <div class="tips-grid">
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(88,166,255,.12);color:var(--accent)">@</div>
+            <h3>@ 符号引用 — 精准提供上下文</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>Cursor 的 @ 引用系统让你可以精确指定 AI 应该参考的上下文：</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc">引用特定文件</span>
+                <span class="shortcut-keys"><code>@filename</code></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">引用整个代码库</span>
+                <span class="shortcut-keys"><code>@Codebase</code></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">引用文档/网页</span>
+                <span class="shortcut-keys"><code>@Docs</code> / <code>@Web</code></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">引用 Git 历史</span>
+                <span class="shortcut-keys"><code>@Git</code></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc">引用特定函数/类</span>
+                <span class="shortcut-keys"><code>@symbolName</code></span>
+              </div>
+            </div>
+            <div class="highlight-box">
+              <strong>关键原则:</strong> 与其让 AI 猜测上下文，不如主动用 @ 提供精确引用。比如 <code>@utils.ts</code> 参考这个工具函数来实现类似的错误处理——比模糊描述高效得多。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(63,185,80,.12);color:var(--green)">&#127919;</div>
+            <h3>结构化提示 — 写出好指令</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>好的提示 (prompt) 应该包含三个要素：<strong>目标</strong>、<strong>约束</strong>、<strong>示例</strong>。</p>
+            <div class="code-block">
+<span class="comment">// 模糊的提示（效果差）</span>
+帮我写个表单验证
+
+<span class="comment">// 结构化的提示（效果好）</span>
+<span class="keyword">目标</span>：为用户注册表单添加客户端验证
+<span class="keyword">字段</span>：邮箱（RFC 5322）、密码（8位+大小写+数字）、手机（中国大陆）
+<span class="keyword">要求</span>：
+- 使用 <span class="string">zod</span> schema 定义验证规则
+- 实时验证，失去焦点时触发
+- 错误提示用中文
+- 参考 <span class="attr">@form-schema.ts</span> 现有模式
+</div>
+            <p>越具体的指令，AI 越能一次性给出满意的结果，减少来回修改。</p>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(188,140,255,.12);color:var(--purple)">&#128257;</div>
+            <h3>迭代对话 — 逐步完善</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>复杂功能不要试图一次搞定，使用迭代策略逐步完善：</p>
+            <div class="step-list">
+              <div class="step-item"><div class="step-content"><strong>先搭骨架</strong> — "先创建基本的组件结构和类型定义，不要实现具体逻辑"</div></div>
+              <div class="step-item"><div class="step-content"><strong>填充核心</strong> — "现在实现核心的数据处理逻辑，参考 @api-types.ts 的接口定义"</div></div>
+              <div class="step-item"><div class="step-content"><strong>处理边界</strong> — "添加错误处理、loading 状态和空数据的 fallback"</div></div>
+              <div class="step-item"><div class="step-content"><strong>打磨细节</strong> — "优化性能，添加 useMemo/useCallback，处理竞态条件"</div></div>
+            </div>
+            <div class="highlight-box success">
+              <strong>为什么有效:</strong> 每一步的上下文都很清晰，AI 更容易给出高质量代码。同时你可以在每一步审查并纠正方向。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(240,136,62,.12);color:var(--orange)">&#128218;</div>
+            <h3>上下文窗口管理</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p>AI 模型有上下文长度限制。有效管理上下文窗口可以显著提升回答质量：</p>
+            <p><strong>及时新建会话：</strong>当对话超过 15-20 轮时，AI 对早期上下文的"记忆"会变弱。此时应新建会话并重新提供关键上下文。</p>
+            <p><strong>精选上下文：</strong>不要把整个项目丢给 AI。只引用真正相关的文件（通常 2-5 个），让 AI 聚焦在核心问题上。</p>
+            <p><strong>利用摘要：</strong>长对话中途可以要求 AI "总结目前的设计决策和待办事项"，然后新建会话粘贴摘要继续。</p>
+            <div class="highlight-box warn">
+              <strong>常见误区:</strong> <code>@Codebase</code> 虽然强大，但在大型项目中会消耗大量上下文窗口。对于具体问题，精准引用 2-3 个相关文件总是优于全局搜索。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(57,210,192,.12);color:var(--cyan)">&#128736;</div>
+            <h3>让 AI 先思考再动手</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>对于复杂任务，让 AI 先分析和规划，再执行修改：</p>
+            <div class="code-block">
+<span class="comment">// 先分析</span>
+分析 <span class="attr">@auth-service.ts</span> 的当前认证流程，
+列出存在的安全隐患和改进建议，
+<span class="keyword">暂时不要修改代码</span>。
+
+<span class="comment">// 确认方案后再执行</span>
+按照你建议的方案 2 进行重构，
+使用 JWT + Refresh Token 双令牌模式。
+</div>
+            <p>这样做有两个好处：你可以在执行前审核方案；AI 有了清晰的计划后，生成的代码质量更高。</p>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(248,81,73,.12);color:var(--red)">&#128293;</div>
+            <h3>调试时的对话策略</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>遇到 bug 时，提供完整的调试信息可以大幅提升 AI 的定位效率：</p>
+            <div class="code-block">
+<span class="keyword">Bug 描述</span>：用户登录后刷新页面，偶尔会被重定向到登录页
+<span class="keyword">复现步骤</span>：登录 -> 等待 3 秒 -> 刷新页面
+<span class="keyword">期望行为</span>：刷新后保持登录状态
+<span class="keyword">实际行为</span>：约 30% 的概率被踢回登录页
+<span class="keyword">相关代码</span>：<span class="attr">@auth-middleware.ts</span> <span class="attr">@session-store.ts</span>
+<span class="keyword">错误日志</span>：Token validation failed: jwt expired
+</div>
+            <p>结构化的 Bug 报告让 AI 可以像有经验的开发者一样系统地排查问题。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel 3: Workflow ===== -->
+    <div class="tab-panel" id="panel-workflow" role="tabpanel">
+      <div class="panel-header reveal">
+        <h2>&#9881; 工作流优化</h2>
+        <p>将 AI 能力融入日常开发工作流，让每个环节都更高效。</p>
+      </div>
+
+      <div class="tips-grid">
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(88,166,255,.12);color:var(--accent)">&#128190;</div>
+            <h3>Git 集成工作流</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>利用 Cursor 的 AI 能力优化 Git 工作流：</p>
+            <div class="step-list">
+              <div class="step-item"><div class="step-content"><strong>智能 Commit Message</strong> — 在聊天中输入"根据 staged changes 生成 commit message"，AI 会分析 diff 并生成语义化的提交信息</div></div>
+              <div class="step-item"><div class="step-content"><strong>代码审查辅助</strong> — 使用 <code>@Git</code> 引用来让 AI 审查最近的改动："review 最近 3 次 commit 的代码质量"</div></div>
+              <div class="step-item"><div class="step-content"><strong>冲突解决</strong> — 遇到合并冲突时，选中冲突区域按 <kbd>Cmd</kbd><kbd>K</kbd>，告诉 AI 保留哪些逻辑</div></div>
+            </div>
+            <div class="highlight-box">
+              <strong>推荐习惯:</strong> 使用 Composer 做大改动前，先 <code>git stash</code> 或 commit 当前进度。这样可以随时回退 AI 生成的不满意的修改。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(63,185,80,.12);color:var(--green)">&#128640;</div>
+            <h3>多文件重构策略</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p>大规模重构是 Composer 的最佳使用场景。以下是经过实践验证的最佳流程：</p>
+            <div class="step-list">
+              <div class="step-item"><div class="step-content"><strong>列出范围</strong> — 先让 AI 分析："列出从 REST API 迁移到 tRPC 需要修改的所有文件"</div></div>
+              <div class="step-item"><div class="step-content"><strong>分批执行</strong> — 将文件按依赖关系分组，先改底层（类型、工具函数），再改上层（组件、页面）</div></div>
+              <div class="step-item"><div class="step-content"><strong>逐批验证</strong> — 每批修改后运行测试确认无误，再继续下一批</div></div>
+              <div class="step-item"><div class="step-content"><strong>同步更新测试</strong> — 不要把测试留到最后，每步改完代码后立即让 AI 更新对应的测试</div></div>
+            </div>
+            <div class="highlight-box warn">
+              <strong>避免:</strong> 一次让 Composer 修改超过 10 个文件。文件越多，AI 出错的概率越大。宁可多分几次，也不要贪多。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(188,140,255,.12);color:var(--purple)">&#128270;</div>
+            <h3>代码库搜索与理解</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>接手新项目或理解陌生代码库时，AI 是你最好的导游：</p>
+            <div class="code-block">
+<span class="comment">// 理解架构</span>
+<span class="attr">@Codebase</span> 这个项目的整体架构是什么？
+主要的模块和它们之间的数据流是怎样的？
+
+<span class="comment">// 理解具体实现</span>
+<span class="attr">@payment-service.ts</span> 这个支付流程的完整链路是什么？
+从用户点击支付按钮到收到支付结果，中间经过了哪些步骤？
+
+<span class="comment">// 查找关联代码</span>
+<span class="attr">@Codebase</span> 所有使用了 UserContext 的组件有哪些？
+它们分别用到了 context 中的哪些字段？
+</div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(240,136,62,.12);color:var(--orange)">&#128295;</div>
+            <h3>测试驱动的 AI 编码</h3>
+            <span class="tip-level level-intermediate">进阶</span>
+          </div>
+          <div class="tip-body">
+            <p>将 TDD 与 AI 结合，既保证代码质量，又提升开发速度：</p>
+            <div class="step-list">
+              <div class="step-item"><div class="step-content"><strong>先写测试</strong> — "根据这个 API 接口文档，为 createOrder 函数生成完整的测试用例，包含边界情况"</div></div>
+              <div class="step-item"><div class="step-content"><strong>AI 实现</strong> — "现在实现 createOrder，使所有测试通过"</div></div>
+              <div class="step-item"><div class="step-content"><strong>验证并补充</strong> — 运行测试，让 AI 修复失败的 case，并添加遗漏的边界测试</div></div>
+            </div>
+            <div class="highlight-box success">
+              <strong>优势:</strong> 测试作为"验收标准"，让 AI 的输出有了客观的衡量依据，大幅减少不符合预期的代码。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(57,210,192,.12);color:var(--cyan)">&#128221;</div>
+            <h3>文档与注释的 AI 辅助</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>让 AI 处理那些重要但耗时的文档工作：</p>
+            <p><strong>JSDoc / TSDoc 生成：</strong>选中一个函数或类，按 <kbd>Cmd</kbd><kbd>K</kbd> 输入"添加完整的 JSDoc 注释"——AI 会分析参数类型、返回值、异常情况并生成标准文档。</p>
+            <p><strong>README 生成：</strong>让 AI 分析项目结构后生成 README，包含安装步骤、使用方法、API 文档等。</p>
+            <p><strong>变更日志：</strong>引用 <code>@Git</code> 让 AI 根据 commit 历史自动生成 CHANGELOG。</p>
+            <div class="highlight-box">
+              <strong>效率提升:</strong> 自动生成的文档通常能覆盖 80% 的内容，你只需花 20% 的时间审核和补充细节。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(248,119,186,.12);color:var(--pink)">&#9889;</div>
+            <h3>终端集成与命令生成</h3>
+            <span class="tip-level level-beginner">入门</span>
+          </div>
+          <div class="tip-body">
+            <p>不记得复杂的 CLI 命令？直接问 AI：</p>
+            <div class="code-block">
+<span class="comment">// 数据库迁移</span>
+"生成一个 prisma migration 命令来给 User 表添加 phone 字段，
+  类型是可空的 varchar(20)"
+
+<span class="comment">// Docker 命令</span>
+"写一个 docker-compose 命令来只重建并重启 api 服务，
+  不影响其他容器"
+
+<span class="comment">// Git 高级操作</span>
+"用 git 命令找出最近一周内谁修改了 auth 目录下的文件最多"
+</div>
+            <p>AI 生成的命令可以直接在 Cursor 内置终端中运行，形成无缝工作流。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Panel 4: Advanced ===== -->
+    <div class="tab-panel" id="panel-advanced" role="tabpanel">
+      <div class="panel-header reveal">
+        <h2>&#128640; 高级技巧</h2>
+        <p>这些技巧可以让你的 Cursor 使用更上一层楼，打造个性化的 AI 编程环境。</p>
+      </div>
+
+      <div class="tips-grid">
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(88,166,255,.12);color:var(--accent)">&#128220;</div>
+            <h3>.cursorrules — 定义项目级 AI 行为</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p><code>.cursorrules</code> 文件放在项目根目录，可以全局影响 AI 在该项目中的所有回答。这是提升 AI 输出一致性的最重要手段。</p>
+            <div class="code-block">
+<span class="comment"># .cursorrules 示例</span>
+
+<span class="keyword">你是一位资深全栈工程师。</span>
+
+<span class="attr">技术栈：</span>
+- 前端：React 18 + TypeScript + TailwindCSS + Zustand
+- 后端：Node.js + Fastify + Prisma + PostgreSQL
+- 测试：Vitest + Testing Library
+
+<span class="attr">编码规范：</span>
+- 使用函数式组件和 hooks，不使用 class 组件
+- 优先使用 const 和箭头函数
+- 所有函数必须有 TypeScript 类型标注
+- 错误处理使用 Result 模式而非 try-catch
+- 组件文件名使用 PascalCase，工具函数使用 camelCase
+
+<span class="attr">回答规范：</span>
+- 代码注释使用中文
+- 变量命名使用英文
+- 回答时先解释思路，再给代码
+- 始终考虑性能和可访问性
+</div>
+            <div class="highlight-box">
+              <strong>效果:</strong> 设置好 .cursorrules 后，AI 的每次回答都会遵循你的技术栈和编码规范，无需每次重复说明。团队共享此文件可以统一 AI 辅助编码的质量。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(63,185,80,.12);color:var(--green)">&#128230;</div>
+            <h3>.cursorignore — 控制 AI 可见范围</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p>类似 <code>.gitignore</code>，<code>.cursorignore</code> 让你控制哪些文件不被 AI 索引和引用：</p>
+            <div class="code-block">
+<span class="comment"># .cursorignore</span>
+
+<span class="comment"># 排除敏感文件</span>
+<span class="string">.env*</span>
+<span class="string">**/secrets/**</span>
+<span class="string">**/credentials/**</span>
+
+<span class="comment"># 排除大型生成文件（减少噪声）</span>
+<span class="string">**/dist/**</span>
+<span class="string">**/node_modules/**</span>
+<span class="string">**/*.min.js</span>
+
+<span class="comment"># 排除不相关的资源</span>
+<span class="string">**/assets/images/**</span>
+<span class="string">**/*.png</span>
+<span class="string">**/*.svg</span>
+</div>
+            <div class="highlight-box warn">
+              <strong>安全提醒:</strong> 务必将包含密钥、token、密码的文件加入 .cursorignore。虽然 Cursor 不会主动泄露这些信息，但减少暴露面始终是好习惯。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(188,140,255,.12);color:var(--purple)">&#129302;</div>
+            <h3>模型选择策略</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p>不同模型适合不同场景，合理选择可以同时优化速度和质量：</p>
+            <div class="shortcut-list">
+              <div class="shortcut-row">
+                <span class="shortcut-desc"><strong>Claude Sonnet</strong> — 日常编码、快速迭代、代码补全</span>
+                <span class="shortcut-keys"><span class="tag">速度快</span><span class="tag">性价比高</span></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc"><strong>Claude Opus / GPT-4o</strong> — 复杂架构设计、大规模重构</span>
+                <span class="shortcut-keys"><span class="tag">质量高</span><span class="tag">推理强</span></span>
+              </div>
+              <div class="shortcut-row">
+                <span class="shortcut-desc"><strong>Cursor Small</strong> — Tab 补全、简单修改</span>
+                <span class="shortcut-keys"><span class="tag">超快</span><span class="tag">省额度</span></span>
+              </div>
+            </div>
+            <div class="highlight-box success">
+              <strong>实用建议:</strong> 80% 的日常编码用 Sonnet 就足够了。只在遇到复杂逻辑设计、棘手 bug 或系统级重构时切换到 Opus/GPT-4o。
+            </div>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(240,136,62,.12);color:var(--orange)">&#128209;</div>
+            <h3>自定义 Prompt 模板</h3>
+            <span class="tip-level level-pro">专家</span>
+          </div>
+          <div class="tip-body">
+            <p>为常用场景预设 prompt 模板，存储在项目的 <code>.cursor/prompts/</code> 目录中：</p>
+            <div class="code-block">
+<span class="comment"># .cursor/prompts/code-review.md</span>
+
+<span class="keyword">## 代码审查模板</span>
+
+请对以下代码进行审查，关注以下方面：
+
+<span class="attr">1. 正确性</span> - 逻辑是否正确，是否有 bug
+<span class="attr">2. 安全性</span> - 是否有 XSS/SQL 注入/CSRF 等风险
+<span class="attr">3. 性能</span> - 是否有不必要的重渲染/请求/计算
+<span class="attr">4. 可维护性</span> - 命名是否清晰，抽象是否合理
+<span class="attr">5. 测试覆盖</span> - 边界情况是否被覆盖
+
+对每个发现的问题，请给出：
+- <span class="string">严重程度</span>（P0-P3）
+- <span class="string">具体位置</span>（文件名 + 行号）
+- <span class="string">修复建议</span>（附代码示例）
+</div>
+            <p>使用时直接在聊天中引用模板文件即可复用标准化的审查流程。</p>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(57,210,192,.12);color:var(--cyan)">&#9878;</div>
+            <h3>Cursor Settings 深度调优</h3>
+            <span class="tip-level level-advanced">高级</span>
+          </div>
+          <div class="tip-body">
+            <p>几个关键设置能显著改善体验：</p>
+            <p><strong>Always Search (Codebase Indexing):</strong> 确保开启代码库索引，首次索引可能需要几分钟，之后 <code>@Codebase</code> 搜索会非常精准。</p>
+            <p><strong>Long Context Mode:</strong> 处理大文件时开启此选项，让 AI 能看到更多内容。但注意这会消耗更多 token。</p>
+            <p><strong>Auto-Import Suggestions:</strong> 开启后 AI 生成的代码会自动处理 import 语句，减少手动添加依赖的麻烦。</p>
+            <p><strong>Copilot++ 增强模式：</strong>如果你是 Pro 用户，开启后 Tab 补全的质量会大幅提升，尤其在跨函数和跨文件的上下文理解方面。</p>
+          </div>
+        </div>
+
+        <!-- Card -->
+        <div class="tip-card reveal">
+          <div class="tip-card-header">
+            <div class="tip-icon" style="background:rgba(248,119,186,.12);color:var(--pink)">&#128171;</div>
+            <h3>AI 编程的心智模型</h3>
+            <span class="tip-level level-pro">专家</span>
+          </div>
+          <div class="tip-body">
+            <p>技术技巧之上，更重要的是建立正确的心智模型：</p>
+            <p><strong>AI 是初级工程师，你是 Tech Lead:</strong> AI 写代码很快，但它不了解业务上下文和系统全貌。你的职责是制定方向、审查质量、把关关键决策。</p>
+            <p><strong>验证优于信任:</strong> AI 写的每一行代码都需要你理解。如果你读不懂 AI 生成的代码，让它解释——这不仅帮助你验证，也是学习的机会。</p>
+            <p><strong>80/20 原则:</strong> 让 AI 处理 80% 的模式化代码（CRUD、样板代码、测试），你把精力放在 20% 的核心设计和复杂逻辑上。</p>
+            <p><strong>持续学习:</strong> 观察 AI 给出的方案，经常会发现你不知道的库、API 或设计模式。把 AI 当作一个永远耐心的结对编程伙伴。</p>
+            <div class="highlight-box success">
+              <strong>终极目标:</strong> 不是用 AI 取代思考，而是用 AI 放大你的思考和产出。最优秀的 AI 辅助开发者，是那些知道何时依赖 AI、何时自己动手的人。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>Cursor IDE 高效编程指南 &mdash; 持续更新中</p>
+    <p style="margin-top:8px">掌握工具，释放创造力。Happy Coding!</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // ===== Tab Switching =====
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+
+      tabBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      tabPanels.forEach(p => p.classList.remove('active'));
+
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      document.getElementById('panel-' + target).classList.add('active');
+
+      // Trigger reveal for newly visible cards
+      requestAnimationFrame(checkReveal);
+    });
+  });
+
+  // ===== Keyboard navigation for tabs =====
+  const tabNav = document.querySelector('.tab-nav');
+  tabNav.addEventListener('keydown', e => {
+    const tabs = Array.from(tabBtns);
+    const idx = tabs.indexOf(document.activeElement);
+    if (idx === -1) return;
+    let next = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (idx + 1) % tabs.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (idx - 1 + tabs.length) % tabs.length;
+    }
+    if (next !== -1) {
+      e.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    }
+  });
+
+  // ===== Scroll Reveal =====
+  function checkReveal() {
+    const reveals = document.querySelectorAll('.reveal:not(.visible)');
+    const windowH = window.innerHeight;
+    reveals.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < windowH - 60) {
+        el.classList.add('visible');
+      }
+    });
+  }
+
+  // Stagger the initial reveal
+  function staggerReveal() {
+    const reveals = document.querySelectorAll('.reveal:not(.visible)');
+    const windowH = window.innerHeight;
+    let delay = 0;
+    reveals.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < windowH - 60) {
+        setTimeout(() => el.classList.add('visible'), delay);
+        delay += 80;
+      }
+    });
+  }
+
+  window.addEventListener('scroll', checkReveal, { passive: true });
+  window.addEventListener('resize', checkReveal, { passive: true });
+
+  // Initial reveal with stagger
+  staggerReveal();
+
+  // ===== Smooth hover glow on tip cards =====
+  document.querySelectorAll('.tip-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--glow-x', x + 'px');
+      card.style.setProperty('--glow-y', y + 'px');
+      card.style.background = `radial-gradient(300px circle at ${x}px ${y}px, rgba(88,166,255,.04), transparent 60%), var(--bg-secondary)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.background = '';
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

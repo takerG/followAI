@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="404 — 页面不存在 | All-in-AI">
+  <div class="not-found">
+    <h1 class="code">404</h1>
+    <p class="message">页面不存在</p>
+    <p class="hint">你要找的页面可能已经被移除或地址有误。</p>
+    <a href="/" class="home-link">← 返回首页</a>
+  </div>
+</Base>
+
+<style>
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .code {
+    font-size: 6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .message {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 8px;
+  }
+
+  .hint {
+    font-size: 0.875rem;
+    color: #999;
+    margin-top: 8px;
+  }
+
+  .home-link {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+
+  .home-link:hover {
+    opacity: 0.9;
+  }
+</style>

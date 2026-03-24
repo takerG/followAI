@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import ExampleGrid from '../components/ExampleGrid.astro';
+import type { ResolvedExample } from '../types/example';
+import allExamples from 'virtual:examples';
+
+// Sort by date descending (newest first)
+const examples = [...(allExamples as ResolvedExample[])].sort((a, b) => {
+  if (!a.date && !b.date) return 0;
+  if (!a.date) return 1;
+  if (!b.date) return -1;
+  return b.date.localeCompare(a.date);
+});
+---
+
+<Base>
+  <SiteHeader />
+  <main>
+    <ExampleGrid examples={examples} />
+  </main>
+</Base>
