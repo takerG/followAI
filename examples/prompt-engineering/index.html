@@ -413,7 +413,7 @@ function UserProfile({ userId }: { userId: string }) {
     id: "refactor", label: "重构代码",
     bad: {
       prompt: "帮我优化这段代码，让它更好",
-      reason: ""更好"的标准是什么？性能？可读性？可维护性？"
+      reason: "\u201C更好\u201D的标准是什么？性能？可读性？可维护性？"
     },
     good: {
       prompt: `请重构以下 Python 函数，目标：
@@ -605,7 +605,7 @@ const TIPS_DATA = {
     label: "调试修复", icon: "🔍",
     tips: [
       { title: "提供完整的错误栈", desc: "不要只发错误消息，把完整的 stack trace 贴给 AI。函数调用链是定位问题的关键线索。", example: `"运行 npm run build 时出现以下错误：\n[完整 stack trace]\n\n环境：Node 18.17, Next.js 14.0.4\n本地开发正常，CI 环境构建失败"` },
-      { title: "描述预期 vs 实际行为", desc: "清晰区分"我期望的行为"和"实际的行为"，让 AI 快速理解问题本质。", example: `"预期行为：点击提交按钮后表单数据发送到 /api/submit，页面跳转到成功页\n实际行为：点击后无反应，网络面板无请求，控制台无报错"` },
+      { title: "描述预期 vs 实际行为", desc: "清晰区分\u201C我期望的行为\u201D和\u201C实际的行为\u201D，让 AI 快速理解问题本质。", example: `"预期行为：点击提交按钮后表单数据发送到 /api/submit，页面跳转到成功页\n实际行为：点击后无反应，网络面板无请求，控制台无报错"` },
       { title: "说明已尝试的方案", desc: "告诉 AI 你已经试过什么方案和结果，避免它给出你已排除的建议，节省来回时间。", example: `"问题：Redis 连接频繁超时\n已尝试：\n1. 增加超时时间到 5s → 仍然超时\n2. 检查网络延迟 < 1ms → 正常\n3. 查看 Redis INFO → connected_clients: 450"` },
       { title: "最小复现代码", desc: "提供能复现问题的最小代码片段，去掉所有无关代码。这既帮助 AI 聚焦问题，也锻炼你的排查能力。", example: `"以下最小代码可复现此 bug：\n\`\`\`js\nconst arr = [1, 2, 3];\narr.forEach(async (n) => {\n  await delay(n * 100);\n  console.log(n);\n});\nconsole.log('done');\n// 输出: done, 1, 2, 3（期望 1,2,3,done）\n\`\`\`"` }
     ]

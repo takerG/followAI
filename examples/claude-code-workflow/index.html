@@ -379,7 +379,7 @@ var RACE_DATA = [
       },
       {
         heading: "常见错误",
-        text: "直接说"帮我写一个 UserService"而不先让 Claude 看看项目中已有的 Service 是怎么写的。结果生成的代码风格、命名、错误处理方式都与项目不一致。"
+        text: "直接说\u201C帮我写一个 UserService\u201D而不先让 Claude 看看项目中已有的 Service 是怎么写的。结果生成的代码风格、命名、错误处理方式都与项目不一致。"
       }
     ],
     tools: ["Read", "Glob", "Grep"],
@@ -391,11 +391,11 @@ var RACE_DATA = [
     details: [
       {
         heading: "何时应该提问？",
-        text: "• 需求描述含糊（如"优化一下""改好一点"）\n• 存在多种合理的实现方案需要决策\n• 涉及业务逻辑的关键判断\n• 不确定是否有现有代码可以复用\n• 技术选型有多种候选方案"
+        text: "• 需求描述含糊（如\u201C优化一下\u201D\u201C改好一点\u201D）\n• 存在多种合理的实现方案需要决策\n• 涉及业务逻辑的关键判断\n• 不确定是否有现有代码可以复用\n• 技术选型有多种候选方案"
       },
       {
         heading: "如何引导 Claude 提问",
-        text: "在提示词中明确说"如果有任何不清楚的地方，请先提问而不是猜测"。也可以在 CLAUDE.md 中设置全局指令，让它在每次开始编码前确认需求。"
+        text: "在提示词中明确说\u201C如果有任何不清楚的地方，请先提问而不是猜测\u201D。也可以在 CLAUDE.md 中设置全局指令，让它在每次开始编码前确认需求。"
       },
       {
         heading: "提问的价值",
@@ -419,7 +419,7 @@ var RACE_DATA = [
       },
       {
         heading: "改动最小化原则",
-        text: "尽量用最少的代码改动达成目标。不要"顺手"重构不相关的代码——那会引入不必要的风险，也让 Code Review 变得困难。"
+        text: "尽量用最少的代码改动达成目标。不要\u201C顺手\u201D重构不相关的代码——那会引入不必要的风险，也让 Code Review 变得困难。"
       }
     ],
     tools: ["Edit", "Write", "Bash"],
@@ -546,7 +546,7 @@ var TIPS_DATA = {
       },
       {
         title: "明确定义验收标准",
-        desc: "在开始编码前，列出功能的验收条件。这帮助 Claude 理解"完成"的定义，也方便后续验证。",
+        desc: "在开始编码前，列出功能的验收条件。这帮助 Claude 理解\u201C完成\u201D的定义，也方便后续验证。",
         example: "验收标准：\n1. 导出文件格式为 .xlsx\n2. 包含订单号、商品、金额、时间列\n3. 支持按日期范围筛选导出\n4. 超过 1 万行时分页导出\n5. 导出过程显示进度条"
       },
       {
@@ -591,12 +591,12 @@ var TIPS_DATA = {
     tips: [
       {
         title: "提供完整错误信息",
-        desc: "不要只说"报错了"，把完整的错误消息、stack trace、相关代码都提供给 Claude，帮助它快速定位。",
+        desc: "不要只说\u201C报错了\u201D，把完整的错误消息、stack trace、相关代码都提供给 Claude，帮助它快速定位。",
         example: "运行 npm test 时出错：\n\nError: connect ECONNREFUSED 127.0.0.1:5432\n    at TCPConnectWrap.afterConnect\n    at src/db/connection.ts:23\n\n环境：Node 18, PostgreSQL 15\n本地 DB 运行状态：已确认启动"
       },
       {
         title: "描述预期 vs 实际行为",
-        desc: "清晰地区分"我期望发生什么"和"实际发生了什么"，帮助 Claude 快速理解问题的本质。",
+        desc: "清晰地区分\u201C我期望发生什么\u201D和\u201C实际发生了什么\u201D，帮助 Claude 快速理解问题的本质。",
         example: "预期行为：\n点击「保存」按钮后，数据写入数据库，\n页面显示成功提示并跳转到列表页。\n\n实际行为：\n点击后按钮变灰，约 3 秒后页面无反应，\n控制台报 CORS 错误。Network 面板显示\n请求状态为 OPTIONS 403。"
       },
       {
@@ -631,7 +631,7 @@ var TIPS_DATA = {
       },
       {
         title: "确认改动范围最小化",
-        desc: "审查改动时确认没有"顺手"修改不相关的代码。改动范围越小，引入回归 Bug 的风险越低。",
+        desc: "审查改动时确认没有\u201C顺手\u201D修改不相关的代码。改动范围越小，引入回归 Bug 的风险越低。",
         example: "请确认这次改动只涉及：\n- src/services/order.ts（添加缓存）\n- src/services/order.test.ts（新增测试）\n\n没有修改其他不相关的文件，\n也没有改变任何公开 API 的签名。"
       }
     ]
