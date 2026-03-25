@@ -5,7 +5,7 @@
 **Why:** 当前架构下，任何示例的 JS 可以读取主站 cookies/localStorage，是 XSS 风险。Outside voice 评审明确指出这是"shipping an XSS vector as a feature"
 **Pros:** 消除跨示例和示例-主站的安全风险，为社区贡献开路
 **Cons:** 增加路由复杂度，iframe 通信需要 postMessage；部分示例功能（如 localStorage）可能受限
-**Context:** 当前 hackathon 阶段由作者本人创建所有示例，PR 审查足够。但在接受任何外部贡献之前必须实现。两种方案：1) iframe sandbox="allow-scripts" 在主站内嵌套；2) 部署到子域名 examples.all-in-ai.dev。方案 1 更快，方案 2 更彻底。
+**Context:** 当前 hackathon 阶段由作者本人创建所有示例，PR 审查足够。但在接受任何外部贡献之前必须实现。两种方案：1) iframe sandbox="allow-scripts" 在主站内嵌套；2) 部署到子域名 examples.followai.dev。方案 1 更快，方案 2 更彻底。
 **Effort:** M (human) → S (CC)
 **Priority:** P1
 **Depends on:** 基础平台完成

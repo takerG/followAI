@@ -24,7 +24,7 @@
         opacity: 0.8;
       }
     </style>
-    <a href="/followAI/">← All-in-AI</a>
+    <a href="/followAI/">← followAI</a>
   `;
   document.body.appendChild(host);
 })();

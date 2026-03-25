@@ -1,4 +1,4 @@
-# All-in-AI
+# followAI
 
 > AI Coding 最佳实践展示平台
 
@@ -23,7 +23,7 @@ npm run build
 ## 项目结构
 
 ```
-all-in-ai/
+followAI/
 ├── site/                                          # Astro 主站
 │   ├── src/
 │   │   ├── integrations/                          # 核心扫描、复制、注入
