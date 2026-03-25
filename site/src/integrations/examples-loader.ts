@@ -205,6 +205,7 @@ function copyExamples(
   examples: ResolvedExample[],
   distDir: string,
   examplesDir: string = EXAMPLES_DIR,
+  base: string = '/',
 ): void {
   const examplesDist = path.join(distDir, 'examples');
 
@@ -229,7 +230,8 @@ function copyExamples(
       const indexPath = path.join(destDir, 'index.html');
       if (fs.existsSync(indexPath)) {
         const html = fs.readFileSync(indexPath, 'utf-8');
-        const scriptTag = `<script src="/assets/back-button.js"></script>`;
+        const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+        const scriptTag = `<script src="${normalizedBase}/assets/back-button.js"></script>`;
         const injected = injectBackButton(html, scriptTag);
         fs.writeFileSync(indexPath, injected, 'utf-8');
       }
@@ -255,11 +257,15 @@ function copyDirSync(src: string, dest: string): void {
 /** Create the Astro integration */
 export function examplesLoader(): AstroIntegration {
   let examples: ResolvedExample[] = [];
+  let base = '/';
 
   return {
     name: 'examples-loader',
     hooks: {
-      'astro:config:setup'({ updateConfig, addMiddleware: _addMiddleware }) {
+      'astro:config:setup'({ updateConfig, config, addMiddleware: _addMiddleware }) {
+        // Capture base path from Astro config
+        base = config.base || '/';
+
         // Scan examples at config time
         examples = scanExamples();
 
@@ -352,7 +358,7 @@ export function examplesLoader(): AstroIntegration {
         const cleanDist = distDir.startsWith('/') && process.platform === 'win32'
           ? distDir.slice(1)
           : distDir;
-        copyExamples(examples, cleanDist);
+        copyExamples(examples, cleanDist, EXAMPLES_DIR, base);
         console.log(
           `[examples-loader] Copied ${examples.length} examples to dist/examples/`,
         );

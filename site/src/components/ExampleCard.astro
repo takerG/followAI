@@ -6,7 +6,8 @@ export interface Props {
 }
 
 const { example } = Astro.props;
-const href = `/examples/${example.slug}/`;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = `${base}/examples/${example.slug}/`;
 
 // 8 gradient presets — deterministic hash from slug
 const GRADIENTS = [
@@ -67,7 +68,7 @@ if (example.tags) {
   <div class="card-cover">
     {example.cover ? (
       <img
-        src={`/examples/${example.slug}/${example.cover}`}
+        src={`${base}/examples/${example.slug}/${example.cover}`}
         alt={example.title}
         loading="lazy"
         style="aspect-ratio: 16/9; object-fit: cover; width: 100%;"

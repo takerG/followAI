@@ -3,6 +3,8 @@ import { examplesLoader } from './src/integrations/examples-loader';
 
 export default defineConfig({
   output: 'static',
+  site: 'https://takerg.github.io',
+  base: '/followAI',
   integrations: [examplesLoader()],
   vite: {
     server: {
