@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <circle cx="680" cy="80" r="100" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="120" cy="400" r="70" fill="rgba(255,255,255,0.04)"/>
+  <text x="400" y="180" text-anchor="middle" font-size="64" fill="rgba(255,255,255,0.9)">✍️</text>
+  <text x="400" y="260" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="36" font-weight="700" fill="white">提示工程实战</text>
+  <text x="400" y="310" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="18" fill="rgba(255,255,255,0.7)">交互式提示词工程指南</text>
+</svg>

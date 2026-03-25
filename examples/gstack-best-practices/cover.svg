@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <circle cx="680" cy="90" r="130" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="120" cy="380" r="90" fill="rgba(255,255,255,0.04)"/>
+  <circle cx="400" cy="450" r="60" fill="rgba(255,255,255,0.03)"/>
+  <text x="400" y="175" text-anchor="middle" font-size="64" fill="rgba(255,255,255,0.9)">🔧</text>
+  <text x="400" y="255" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="36" font-weight="700" fill="white">gstack 工作流最佳实践</text>
+  <text x="400" y="305" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="18" fill="rgba(255,255,255,0.7)">技能体系与协作指南</text>
+</svg>

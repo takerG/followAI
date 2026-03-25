@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gstack 工作流最佳实践 — 技能体系与协作指南</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0f172a;
+  --bg-secondary:#1e293b;
+  --bg-tertiary:#253349;
+  --bg-card:#1e293b;
+  --bg-hover:#334155;
+  --border:#334155;
+  --border-active:#10b981;
+  --text-primary:#e2e8f0;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --accent:#10b981;
+  --accent-glow:rgba(16,185,129,.15);
+  --green:#10b981;
+  --green-dim:rgba(16,185,129,.12);
+  --cyan:#06b6d4;
+  --cyan-dim:rgba(6,182,212,.12);
+  --purple:#a78bfa;
+  --purple-dim:rgba(167,139,250,.12);
+  --orange:#f59e0b;
+  --orange-dim:rgba(245,158,11,.12);
+  --red:#ef4444;
+  --red-dim:rgba(239,68,68,.12);
+  --pink:#ec4899;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+  --transition:0.3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji";
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ===== Animated Background ===== */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(16,185,129,.08),transparent),
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:100% 100%,60px 60px,60px 60px;
+  opacity:.25;
+}
+
+/* ===== Container ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .6s ease-out,transform .6s ease-out}
+.reveal.visible{opacity:1;transform:none}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+
+/* ===== Animations ===== */
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ===== Hero ===== */
+.hero{
+  padding:100px 0 60px;
+  text-align:center;
+  position:relative;
+}
+.hero::before{
+  content:'';position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(16,185,129,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:20px;
+  background:var(--accent-glow);border:1px solid rgba(16,185,129,.25);
+  color:var(--accent);font-size:.85rem;font-weight:500;
+  margin-bottom:24px;
+  animation:fadeInDown .6s ease-out;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.hero h1{
+  font-size:clamp(2.2rem,5vw,3.6rem);
+  font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--text-primary) 0%,var(--green) 50%,var(--cyan) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:fadeInDown .6s ease-out .1s both;
+  line-height:1.2;
+  margin-bottom:20px;
+}
+.hero p{
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--text-secondary);
+  max-width:640px;margin:0 auto;
+  animation:fadeInDown .6s ease-out .2s both;
+}
+
+/* ===== Section Headings ===== */
+.section{padding:60px 0}
+.section-title{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;
+  margin-bottom:12px;color:var(--text-primary);
+}
+.section-subtitle{
+  font-size:1rem;color:var(--text-secondary);
+  margin-bottom:40px;max-width:600px;
+}
+
+/* ===== Skill Categories Grid ===== */
+.cat-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
+}
+.cat-card{
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden;
+}
+.cat-card:hover{border-color:var(--border-active);transform:translateY(-2px);box-shadow:var(--shadow)}
+.cat-card.active{border-color:var(--border-active)}
+.cat-card-icon{font-size:2rem;margin-bottom:12px}
+.cat-card h3{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+.cat-card .cat-label{font-size:.85rem;color:var(--text-muted);margin-bottom:16px}
+.cat-card .skill-list{
+  display:none;flex-wrap:wrap;gap:8px;margin-top:12px;
+  border-top:1px solid var(--border);padding-top:16px;
+}
+.cat-card.active .skill-list{display:flex}
+.skill-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 12px;border-radius:16px;font-size:.8rem;font-weight:500;
+  background:var(--accent-glow);color:var(--accent);border:1px solid rgba(16,185,129,.2);
+  transition:var(--transition);
+}
+.skill-tag:hover{background:rgba(16,185,129,.25)}
+.cat-expand{
+  font-size:.8rem;color:var(--text-muted);margin-top:8px;transition:var(--transition);
+}
+.cat-card.active .cat-expand{color:var(--accent)}
+
+/* ===== Workflow Tabs ===== */
+.tab-nav{
+  display:flex;gap:4px;background:var(--bg-secondary);border-radius:var(--radius);
+  padding:4px;margin-bottom:32px;overflow-x:auto;border:1px solid var(--border);
+}
+.tab-btn{
+  flex:1;padding:12px 20px;border:none;background:transparent;color:var(--text-secondary);
+  font-size:.9rem;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;
+  transition:var(--transition);white-space:nowrap;font-family:inherit;
+}
+.tab-btn:hover{color:var(--text-primary);background:var(--bg-tertiary)}
+.tab-btn.active{background:var(--accent);color:#fff}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ===== Flow Chart ===== */
+.flow{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;
+  padding:32px 16px;
+}
+.flow-step{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;min-width:120px;text-align:center;transition:var(--transition);
+}
+.flow-step:hover{border-color:var(--accent);transform:translateY(-2px)}
+.flow-step .step-icon{font-size:1.5rem}
+.flow-step .step-label{font-size:.85rem;font-weight:600;color:var(--text-primary)}
+.flow-step .step-cmd{font-size:.75rem;color:var(--accent);font-family:monospace}
+.flow-arrow{
+  font-size:1.2rem;color:var(--text-muted);flex-shrink:0;
+}
+@media(max-width:600px){
+  .flow{flex-direction:column}
+  .flow-arrow{transform:rotate(90deg)}
+}
+
+/* ===== Do/Don't Cards ===== */
+.dodont-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.dodont-grid{grid-template-columns:1fr}}
+.dodont-card{
+  background:var(--bg-secondary);border-radius:var(--radius);padding:28px;
+  border:1px solid var(--border);
+}
+.dodont-card h3{
+  font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.dodont-card.do-card h3{color:var(--green)}
+.dodont-card.dont-card h3{color:var(--red)}
+.dodont-card ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.dodont-card li{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:.95rem;color:var(--text-secondary);line-height:1.5;
+}
+.dodont-card li::before{
+  flex-shrink:0;font-size:1rem;margin-top:2px;
+}
+.do-card li::before{content:'✅'}
+.dont-card li::before{content:'❌'}
+
+/* ===== Command Examples ===== */
+.cmd-list{display:flex;flex-direction:column;gap:16px}
+.cmd-block{
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.cmd-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);
+}
+.cmd-header .cmd-title{font-size:.8rem;color:var(--text-muted);font-weight:600}
+.cmd-copy{
+  padding:4px 12px;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--text-secondary);font-size:.75rem;
+  cursor:pointer;transition:var(--transition);font-family:inherit;
+}
+.cmd-copy:hover{border-color:var(--accent);color:var(--accent)}
+.cmd-copy.copied{border-color:var(--green);color:var(--green)}
+.cmd-body{
+  padding:16px 20px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;
+  font-size:.9rem;color:var(--green);line-height:1.6;overflow-x:auto;
+}
+.cmd-body .prompt{color:var(--text-muted);user-select:none}
+.cmd-body .comment{color:var(--text-muted);font-style:italic}
+.cmd-body .flag{color:var(--cyan)}
+
+/* ===== Skill Descriptions ===== */
+.skill-desc-list{
+  display:flex;flex-direction:column;gap:6px;margin-top:12px;
+}
+.skill-desc-item{
+  display:flex;align-items:baseline;gap:8px;font-size:.82rem;
+  color:var(--text-secondary);line-height:1.5;
+}
+.skill-desc-item code{
+  font-family:'SF Mono',SFMono-Regular,Consolas,monospace;
+  font-size:.78rem;color:var(--accent);background:var(--accent-glow);
+  padding:1px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;
+}
+
+/* ===== Flow Description ===== */
+.flow-desc{
+  margin-top:20px;padding:20px 24px;
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);
+  font-size:.9rem;color:var(--text-secondary);line-height:1.7;
+}
+.flow-desc strong{color:var(--text-primary)}
+
+/* ===== Quick Start Section ===== */
+.quickstart-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+}
+.qs-card{
+  background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;transition:var(--transition);
+}
+.qs-card:hover{border-color:var(--border-active);transform:translateY(-2px)}
+.qs-card .qs-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--accent-glow);color:var(--accent);
+  font-size:.85rem;font-weight:700;margin-bottom:12px;
+}
+.qs-card h4{font-size:1rem;font-weight:600;margin-bottom:8px;color:var(--text-primary)}
+.qs-card p{font-size:.9rem;color:var(--text-secondary);line-height:1.6}
+
+/* ===== Footer ===== */
+.footer{
+  text-align:center;padding:48px 24px;
+  color:var(--text-muted);font-size:.85rem;
+  border-top:1px solid var(--border);margin-top:40px;
+}
+.footer a{color:var(--accent);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* ===== Responsive ===== */
+@media(max-width:480px){
+  .container{padding:0 16px}
+  .hero{padding:72px 0 40px}
+  .section{padding:40px 0}
+  .cat-grid{grid-template-columns:1fr}
+  .quickstart-grid{grid-template-columns:1fr}
+  .tab-btn{padding:10px 14px;font-size:.8rem}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="dot"></span> AI 编程最佳实践</div>
+    <h1>gstack 工作流最佳实践</h1>
+    <p>掌握 gstack 技能体系，构建高效的 AI 编程协作工作流，从规划到部署全流程提效</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== Section 1: Skill Categories ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">🧩 技能体系总览</h2>
+      <p class="section-subtitle reveal">gstack 提供 20+ 专用技能，覆盖软件开发全生命周期。点击分类查看详情。</p>
+      <div class="cat-grid">
+
+        <div class="cat-card reveal" data-cat="discovery">
+          <div class="cat-card-icon">🔍</div>
+          <h3>发现 &amp; 规划</h3>
+          <div class="cat-label">Discovery &amp; Planning</div>
+          <p class="cat-expand">点击展开 6 个技能 ↓</p>
+          <div class="skill-list">
+            <span class="skill-tag">/office-hours</span>
+            <span class="skill-tag">/plan-ceo-review</span>
+            <span class="skill-tag">/plan-eng-review</span>
+            <span class="skill-tag">/plan-design-review</span>
+            <span class="skill-tag">/design-consultation</span>
+            <span class="skill-tag">/autoplan</span>
+          </div>
+          <div class="skill-desc-list">
+            <div class="skill-desc-item"><code>/office-hours</code> 头脑风暴与产品思考会话</div>
+            <div class="skill-desc-item"><code>/plan-ceo-review</code> 从 CEO 视角审视战略计划</div>
+            <div class="skill-desc-item"><code>/plan-eng-review</code> 架构与工程方案评审</div>
+            <div class="skill-desc-item"><code>/plan-design-review</code> 设计方案评审</div>
+            <div class="skill-desc-item"><code>/design-consultation</code> 设计咨询与反馈</div>
+            <div class="skill-desc-item"><code>/autoplan</code> 自动生成实施计划</div>
+          </div>
+        </div>
+
+        <div class="cat-card reveal" data-cat="development">
+          <div class="cat-card-icon">⚙️</div>
+          <h3>开发</h3>
+          <div class="cat-label">Development</div>
+          <p class="cat-expand">点击展开 6 个技能 ↓</p>
+          <div class="skill-list">
+            <span class="skill-tag">/review</span>
+            <span class="skill-tag">/careful</span>
+            <span class="skill-tag">/freeze</span>
+            <span class="skill-tag">/guard</span>
+            <span class="skill-tag">/investigate</span>
+            <span class="skill-tag">/codex</span>
+          </div>
+          <div class="skill-desc-list">
+            <div class="skill-desc-item"><code>/review</code> 全面代码审查</div>
+            <div class="skill-desc-item"><code>/careful</code> 启用生产安全模式</div>
+            <div class="skill-desc-item"><code>/freeze</code> 冻结范围防止越界修改</div>
+            <div class="skill-desc-item"><code>/guard</code> 守护生产系统安全</div>
+            <div class="skill-desc-item"><code>/investigate</code> Bug 调查与调试</div>
+            <div class="skill-desc-item"><code>/codex</code> 获取第二意见或知识查询</div>
+          </div>
+        </div>
+
+        <div class="cat-card reveal" data-cat="deployment">
+          <div class="cat-card-icon">🚀</div>
+          <h3>部署</h3>
+          <div class="cat-label">Deployment</div>
+          <p class="cat-expand">点击展开 5 个技能 ↓</p>
+          <div class="skill-list">
+            <span class="skill-tag">/ship</span>
+            <span class="skill-tag">/land-and-deploy</span>
+            <span class="skill-tag">/canary</span>
+            <span class="skill-tag">/setup-deploy</span>
+            <span class="skill-tag">/document-release</span>
+          </div>
+          <div class="skill-desc-list">
+            <div class="skill-desc-item"><code>/ship</code> 一键发布到生产环境</div>
+            <div class="skill-desc-item"><code>/land-and-deploy</code> 合并变更并部署</div>
+            <div class="skill-desc-item"><code>/canary</code> 灰度发布与监控</div>
+            <div class="skill-desc-item"><code>/setup-deploy</code> 配置部署设置</div>
+            <div class="skill-desc-item"><code>/document-release</code> 记录发布详情</div>
+          </div>
+        </div>
+
+        <div class="cat-card reveal" data-cat="quality">
+          <div class="cat-card-icon">🛡️</div>
+          <h3>质量 &amp; 安全</h3>
+          <div class="cat-label">Quality &amp; Security</div>
+          <p class="cat-expand">点击展开 6 个技能 ↓</p>
+          <div class="skill-list">
+            <span class="skill-tag">/qa</span>
+            <span class="skill-tag">/qa-only</span>
+            <span class="skill-tag">/design-review</span>
+            <span class="skill-tag">/benchmark</span>
+            <span class="skill-tag">/cso</span>
+            <span class="skill-tag">/browse</span>
+          </div>
+          <div class="skill-desc-list">
+            <div class="skill-desc-item"><code>/qa</code> 自动化质量测试</div>
+            <div class="skill-desc-item"><code>/qa-only</code> 纯测试不修改代码</div>
+            <div class="skill-desc-item"><code>/design-review</code> 视觉设计审查</div>
+            <div class="skill-desc-item"><code>/benchmark</code> 性能基准测试</div>
+            <div class="skill-desc-item"><code>/cso</code> 首席安全官审查</div>
+            <div class="skill-desc-item"><code>/browse</code> 网页浏览与验证</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Section 2: Workflow Flowcharts ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">🔄 常用工作流</h2>
+      <p class="section-subtitle reveal">三种典型工作流场景，展示 gstack 技能如何串联使用。</p>
+
+      <div class="tab-nav reveal" role="tablist">
+        <button class="tab-btn active" data-tab="feat" role="tab" aria-selected="true">功能开发</button>
+        <button class="tab-btn" data-tab="hotfix" role="tab" aria-selected="false">紧急修复</button>
+        <button class="tab-btn" data-tab="release" role="tab" aria-selected="false">发布周期</button>
+      </div>
+
+      <!-- Feature Development -->
+      <div id="panel-feat" class="tab-panel active" role="tabpanel">
+        <div class="flow reveal">
+          <div class="flow-step">
+            <span class="step-icon">🔍</span>
+            <span class="step-label">规划</span>
+            <span class="step-cmd">/office-hours</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">📋</span>
+            <span class="step-label">生成计划</span>
+            <span class="step-cmd">/autoplan</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">💻</span>
+            <span class="step-label">编码</span>
+            <span class="step-cmd">Code</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">🔎</span>
+            <span class="step-label">审查</span>
+            <span class="step-cmd">/review</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">🚀</span>
+            <span class="step-label">发布</span>
+            <span class="step-cmd">/ship</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">📊</span>
+            <span class="step-label">监控</span>
+            <span class="step-cmd">/canary</span>
+          </div>
+        </div>
+        <div class="flow-desc reveal">
+          <strong>功能开发流程：</strong>先通过 <code>/office-hours</code> 头脑风暴明确需求，再用 <code>/autoplan</code> 生成结构化计划。编码完成后使用 <code>/review</code> 确保代码质量，通过 <code>/ship</code> 发布，最后用 <code>/canary</code> 灰度监控确保线上稳定。
+        </div>
+      </div>
+
+      <!-- Hotfix -->
+      <div id="panel-hotfix" class="tab-panel" role="tabpanel">
+        <div class="flow reveal">
+          <div class="flow-step">
+            <span class="step-icon">🔥</span>
+            <span class="step-label">调查</span>
+            <span class="step-cmd">/investigate</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">🔧</span>
+            <span class="step-label">修复</span>
+            <span class="step-cmd">Fix</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">🔎</span>
+            <span class="step-label">审查</span>
+            <span class="step-cmd">/review</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">⚡</span>
+            <span class="step-label">快速部署</span>
+            <span class="step-cmd">/land-and-deploy</span>
+          </div>
+        </div>
+        <div class="flow-desc reveal">
+          <strong>紧急修复流程：</strong>线上出现故障时，首先用 <code>/investigate</code> 快速定位根因。完成修复后通过 <code>/review</code> 快速审查，确认无误后使用 <code>/land-and-deploy</code> 直接合并部署，缩短修复时间。
+        </div>
+      </div>
+
+      <!-- Release Cycle -->
+      <div id="panel-release" class="tab-panel" role="tabpanel">
+        <div class="flow reveal">
+          <div class="flow-step">
+            <span class="step-icon">📋</span>
+            <span class="step-label">规划</span>
+            <span class="step-cmd">/plan-eng-review</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">💻</span>
+            <span class="step-label">开发</span>
+            <span class="step-cmd">Develop</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">✅</span>
+            <span class="step-label">测试</span>
+            <span class="step-cmd">/qa</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">🚀</span>
+            <span class="step-label">发布</span>
+            <span class="step-cmd">/ship</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">📊</span>
+            <span class="step-label">灰度</span>
+            <span class="step-cmd">/canary</span>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step">
+            <span class="step-icon">📝</span>
+            <span class="step-label">记录</span>
+            <span class="step-cmd">/document-release</span>
+          </div>
+        </div>
+        <div class="flow-desc reveal">
+          <strong>发布周期流程：</strong>从 <code>/plan-eng-review</code> 架构评审开始，经过开发阶段后使用 <code>/qa</code> 全面测试。通过 <code>/ship</code> 发布后进入 <code>/canary</code> 灰度观察期，最终用 <code>/document-release</code> 完成发布文档归档。
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== Section 3: Do / Don't ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">✅ 最佳实践 Do &amp; Don't</h2>
+      <p class="section-subtitle reveal">遵循这些原则，让 gstack 工作流效率最大化。</p>
+
+      <div class="dodont-grid">
+
+        <div class="dodont-card do-card reveal">
+          <h3>✅ 推荐做法</h3>
+          <ul>
+            <li>动手编码前，先用 <strong>/office-hours</strong> 理清思路和需求</li>
+            <li>合并代码前，始终使用 <strong>/review</strong> 进行代码审查</li>
+            <li>重大变更后，运行 <strong>/qa</strong> 进行全面质量验证</li>
+            <li>部署上线后，让 <strong>/canary</strong> 持续监控服务健康</li>
+            <li>涉及安全的变更，用 <strong>/cso</strong> 做安全审查</li>
+            <li>发布后用 <strong>/document-release</strong> 记录变更详情</li>
+          </ul>
+        </div>
+
+        <div class="dodont-card dont-card reveal">
+          <h3>❌ 避免做法</h3>
+          <ul>
+            <li>跳过规划阶段，直接上手写代码</li>
+            <li>不经 review 就推送代码到主分支</li>
+            <li>安全敏感的变更忽略 <strong>/cso</strong> 审查</li>
+            <li>发布后不做灰度监控直接全量放开</li>
+            <li>跳过 <strong>/document-release</strong>，让团队无从了解变更</li>
+            <li>在生产环境操作前不使用 <strong>/careful</strong> 模式</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Section 4: Quick Start Guide ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">⚡ 快速上手指南</h2>
+      <p class="section-subtitle reveal">四步掌握 gstack 工作流的核心理念。</p>
+
+      <div class="quickstart-grid">
+
+        <div class="qs-card reveal">
+          <div class="qs-num">1</div>
+          <h4>先规划再动手</h4>
+          <p>每个任务开始前，用 <code>/office-hours</code> 或 <code>/autoplan</code> 明确目标和方案。清晰的规划能节省后续 80% 的返工时间。</p>
+        </div>
+
+        <div class="qs-card reveal">
+          <div class="qs-num">2</div>
+          <h4>编码中持续保护</h4>
+          <p>开发过程中善用 <code>/careful</code> 模式和 <code>/freeze</code> 范围锁定，避免意外修改关键代码。遇到疑问随时用 <code>/codex</code> 获取参考。</p>
+        </div>
+
+        <div class="qs-card reveal">
+          <div class="qs-num">3</div>
+          <h4>发布前全面检查</h4>
+          <p>合并前必须 <code>/review</code>，重要变更配合 <code>/qa</code> 和 <code>/cso</code> 多维度验证。宁可多花 10 分钟检查，也不要线上出事后花 10 小时修复。</p>
+        </div>
+
+        <div class="qs-card reveal">
+          <div class="qs-num">4</div>
+          <h4>上线后持续观察</h4>
+          <p>每次部署后用 <code>/canary</code> 灰度监控，确认指标正常后再全量。最后别忘了 <code>/document-release</code> 留下记录，方便团队追溯。</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Section 5: Command Examples ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">💻 实战命令示例</h2>
+      <p class="section-subtitle reveal">复制即用的 gstack 命令参考，快速上手各类场景。</p>
+
+      <div class="cmd-list">
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">💡 头脑风暴 — 规划新功能</span>
+            <button class="cmd-copy" data-cmd="/office-hours brainstorm my new feature">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 启动头脑风暴会议，梳理功能需求和方案</span><br>
+            <span class="prompt">❯ </span>/office-hours brainstorm my new feature
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🚀 发布上线 — 完整 ship 流程</span>
+            <button class="cmd-copy" data-cmd="/ship">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 一键启动发布流程：构建 → 测试 → 部署</span><br>
+            <span class="prompt">❯ </span>/ship
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">✅ 质量验证 — QA 测试</span>
+            <button class="cmd-copy" data-cmd="/qa https://myapp.com">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 对指定 URL 执行自动化质量验证</span><br>
+            <span class="prompt">❯ </span>/qa <span class="flag">https://myapp.com</span>
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🔥 故障排查 — 调查线上问题</span>
+            <button class="cmd-copy" data-cmd="/investigate the login 502 error">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 自动分析日志和指标，定位根因</span><br>
+            <span class="prompt">❯ </span>/investigate the login 502 error
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🔎 代码审查 — Review PR</span>
+            <button class="cmd-copy" data-cmd="/review">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 对当前分支进行全面代码审查</span><br>
+            <span class="prompt">❯ </span>/review
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">📋 自动规划 — 生成实施计划</span>
+            <button class="cmd-copy" data-cmd="/autoplan">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 基于当前上下文自动生成实施计划</span><br>
+            <span class="prompt">❯ </span>/autoplan
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🛡️ 安全审查 — CSO Review</span>
+            <button class="cmd-copy" data-cmd="/cso">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 以首席安全官视角审查变更的安全影响</span><br>
+            <span class="prompt">❯ </span>/cso
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">📊 灰度监控 — Canary 部署</span>
+            <button class="cmd-copy" data-cmd="/canary">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 监控灰度发布指标，自动检测异常</span><br>
+            <span class="prompt">❯ </span>/canary
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🧊 范围冻结 — 防止越界修改</span>
+            <button class="cmd-copy" data-cmd="/freeze">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 冻结当前范围，确保后续操作不超出边界</span><br>
+            <span class="prompt">❯ </span>/freeze<br>
+            <span class="comment"># 完成后解除冻结</span><br>
+            <span class="prompt">❯ </span>/unfreeze
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">📝 发布记录 — 文档归档</span>
+            <button class="cmd-copy" data-cmd="/document-release">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 自动生成发布文档，记录变更详情</span><br>
+            <span class="prompt">❯ </span>/document-release
+          </div>
+        </div>
+
+        <div class="cmd-block reveal">
+          <div class="cmd-header">
+            <span class="cmd-title">🌐 网页浏览 — 在线验证</span>
+            <button class="cmd-copy" data-cmd="/browse https://myapp.com/new-feature">复制</button>
+          </div>
+          <div class="cmd-body">
+            <span class="comment"># 通过浏览器访问页面，验证功能表现</span><br>
+            <span class="prompt">❯ </span>/browse <span class="flag">https://myapp.com/new-feature</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <p style="font-size:1rem;color:var(--text-secondary);margin-bottom:8px">gstack 工作流最佳实践</p>
+    <p>技能体系与协作指南 &mdash; 持续更新中</p>
+    <p style="margin-top:12px">善用工具，释放创造力。Happy Coding! 🚀</p>
+    <p style="margin-top:16px;font-size:.78rem">
+      由 <a href="#">All-in-AI</a> 团队整理 &middot; 共收录 23 个 gstack 技能
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // ===== Tab Switching =====
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = btn.dataset.tab;
+      tabBtns.forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      tabPanels.forEach(function(p){ p.classList.remove('active'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      document.getElementById('panel-' + target).classList.add('active');
+      requestAnimationFrame(checkReveal);
+    });
+  });
+
+  // ===== Keyboard navigation for tabs =====
+  var tabNav = document.querySelector('.tab-nav');
+  if(tabNav){
+    tabNav.addEventListener('keydown', function(e){
+      var tabs = Array.from(tabBtns);
+      var idx = tabs.indexOf(document.activeElement);
+      if(idx === -1) return;
+      var next = -1;
+      if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){
+        next = (idx + 1) % tabs.length;
+      } else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
+        next = (idx - 1 + tabs.length) % tabs.length;
+      }
+      if(next !== -1){
+        e.preventDefault();
+        tabs[next].focus();
+        tabs[next].click();
+      }
+    });
+  }
+
+  // ===== Skill Category Toggle =====
+  var catCards = document.querySelectorAll('.cat-card');
+  catCards.forEach(function(card){
+    card.addEventListener('click', function(){
+      var wasActive = card.classList.contains('active');
+      catCards.forEach(function(c){ c.classList.remove('active'); });
+      if(!wasActive){
+        card.classList.add('active');
+      }
+    });
+  });
+
+  // ===== Copy Buttons =====
+  var copyBtns = document.querySelectorAll('.cmd-copy');
+  copyBtns.forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var cmd = btn.dataset.cmd;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(cmd).then(function(){
+          btn.textContent = '已复制';
+          btn.classList.add('copied');
+          setTimeout(function(){ btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+        });
+      } else {
+        // Fallback
+        var ta = document.createElement('textarea');
+        ta.value = cmd;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+      }
+    });
+  });
+
+  // ===== Scroll Reveal (IntersectionObserver) =====
+  function checkReveal(){
+    var reveals = document.querySelectorAll('.reveal:not(.visible)');
+    reveals.forEach(function(el){
+      var rect = el.getBoundingClientRect();
+      if(rect.top < window.innerHeight + 20){
+        el.classList.add('visible');
+      }
+    });
+  }
+
+  if('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el){
+      observer.observe(el);
+    });
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    window.addEventListener('scroll', checkReveal, { passive: true });
+    window.addEventListener('resize', checkReveal, { passive: true });
+    checkReveal();
+  }
+
+  // Safety net: force-reveal any remaining hidden elements after 2s
+  setTimeout(function(){
+    document.querySelectorAll('.reveal:not(.visible)').forEach(function(el){
+      el.classList.add('visible');
+    });
+  }, 2000);
+
+  // ===== Hover glow on cards =====
+  document.querySelectorAll('.cat-card, .dodont-card').forEach(function(card){
+    card.addEventListener('mousemove', function(e){
+      var rect = card.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+      card.style.background = 'radial-gradient(300px circle at ' + x + 'px ' + y + 'px, rgba(16,185,129,.04), transparent 60%), var(--bg-secondary)';
+    });
+    card.addEventListener('mouseleave', function(){
+      card.style.background = '';
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

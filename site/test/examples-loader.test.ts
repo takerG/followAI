@@ -290,4 +290,56 @@ describe('scanExamples', () => {
       expect.stringContaining('failed validation'),
     );
   });
+
+  // 18. Auto-detect cover.png
+  it('auto-detects cover.png when no cover in meta.json', () => {
+    const dir = createExampleDir('auto-png', {
+      title: 'Auto PNG',
+      description: 'Has cover.png file',
+    });
+    fs.writeFileSync(path.join(dir, 'cover.png'), 'fake-png-data');
+
+    const result = scanExamples(tmpDir);
+    expect(result).toHaveLength(1);
+    expect(result[0].cover).toBe('cover.png');
+  });
+
+  // 19. Auto-detect cover.svg
+  it('auto-detects cover.svg when no cover in meta.json', () => {
+    const dir = createExampleDir('auto-svg', {
+      title: 'Auto SVG',
+      description: 'Has cover.svg file',
+    });
+    fs.writeFileSync(path.join(dir, 'cover.svg'), '<svg></svg>');
+
+    const result = scanExamples(tmpDir);
+    expect(result).toHaveLength(1);
+    expect(result[0].cover).toBe('cover.svg');
+  });
+
+  // 20. meta.json cover takes priority over auto-detected file
+  it('prefers cover from meta.json over auto-detected file', () => {
+    const dir = createExampleDir('explicit-cover', {
+      title: 'Explicit Cover',
+      description: 'Has explicit cover in meta.json',
+      cover: 'custom.jpg',
+    });
+    fs.writeFileSync(path.join(dir, 'cover.svg'), '<svg></svg>');
+
+    const result = scanExamples(tmpDir);
+    expect(result).toHaveLength(1);
+    expect(result[0].cover).toBe('custom.jpg');
+  });
+
+  // 21. No cover file → cover remains undefined
+  it('leaves cover undefined when no cover file exists', () => {
+    createExampleDir('no-cover', {
+      title: 'No Cover',
+      description: 'No cover file at all',
+    });
+
+    const result = scanExamples(tmpDir);
+    expect(result).toHaveLength(1);
+    expect(result[0].cover).toBeUndefined();
+  });
 });

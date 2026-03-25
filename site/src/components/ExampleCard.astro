@@ -7,6 +7,60 @@ export interface Props {
 
 const { example } = Astro.props;
 const href = `/examples/${example.slug}/`;
+
+// 8 gradient presets — deterministic hash from slug
+const GRADIENTS = [
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  'linear-gradient(135deg, #0c3483 0%, #a2b6df 100%)',
+];
+
+// Tag → emoji mapping
+const TAG_EMOJI: Record<string, string> = {
+  cursor: '🖱️',
+  tdd: '🧪',
+  git: '🌿',
+  gstack: '🔧',
+  'claude-code': '🧠',
+  prompt: '✍️',
+  'prompt-engineering': '✍️',
+  workflow: '⚡',
+  testing: '🧪',
+  'best-practices': '✨',
+  'ai-coding': '🤖',
+  worktree: '🌲',
+  productivity: '🚀',
+  ide: '💻',
+  llm: '🤖',
+};
+
+function hashSlug(slug: string): number {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) {
+    hash = ((hash << 5) - hash + slug.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+const gradientIndex = hashSlug(example.slug) % GRADIENTS.length;
+const gradient = GRADIENTS[gradientIndex];
+
+// Pick emoji from first matching tag
+let emoji = '📄';
+if (example.tags) {
+  for (const tag of example.tags) {
+    const key = tag.toLowerCase();
+    if (TAG_EMOJI[key]) {
+      emoji = TAG_EMOJI[key];
+      break;
+    }
+  }
+}
 ---
 
 <a href={href} class="card">
@@ -19,8 +73,12 @@ const href = `/examples/${example.slug}/`;
         style="aspect-ratio: 16/9; object-fit: cover; width: 100%;"
       />
     ) : (
-      <div class="cover-placeholder">
-        <span class="cover-letter">{example.title.charAt(0).toUpperCase()}</span>
+      <div class="cover-placeholder" style={`background: ${gradient};`}>
+        <div class="cover-pattern"></div>
+        <div class="cover-content">
+          <span class="cover-emoji">{emoji}</span>
+          <span class="cover-title">{example.title}</span>
+        </div>
       </div>
     )}
   </div>
@@ -46,6 +104,8 @@ const href = `/examples/${example.slug}/`;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
   }
 
   .card:hover {
@@ -62,17 +122,51 @@ const href = `/examples/${example.slug}/`;
   .cover-placeholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
   }
 
-  .cover-letter {
-    font-size: 3rem;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.9);
-    text-transform: uppercase;
+  .cover-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(0,0,0,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .cover-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 1.5rem;
+    text-align: center;
+  }
+
+  .cover-emoji {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    line-height: 1;
+  }
+
+  .cover-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
   }
 
   .card-body {

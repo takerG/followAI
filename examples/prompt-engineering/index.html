@@ -167,6 +167,7 @@ section{padding:5rem 1.5rem}
 /* ===== SCROLL ANIMATIONS ===== */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -863,8 +864,15 @@ function copyResult() {
 function initReveal() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  }, { threshold: 0.05, rootMargin: '0px 0px 0px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Safety net: force-reveal any remaining hidden elements after 2s
+  setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => {
+      el.classList.add('visible');
+    });
+  }, 2000);
 }
 
 /* ===== NAV ACTIVE ===== */

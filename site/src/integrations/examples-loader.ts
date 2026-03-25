@@ -1,7 +1,7 @@
 import type { AstroIntegration } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ResolvedExample } from '../types/example.js';
+import type { ResolvedExample, ExampleMeta } from '../types/example.js';
 import { isValidExampleMeta } from '../types/example.js';
 
 const VIRTUAL_MODULE_ID = 'virtual:examples';
@@ -143,6 +143,17 @@ export function scanExamples(examplesDir: string = EXAMPLES_DIR): ResolvedExampl
       console.warn(
         `[examples-loader] Warning: ${entry.name} has no index.html — excluding from list`,
       );
+    }
+
+    // Auto-detect cover image if not specified in meta.json
+    if (!meta.cover) {
+      const coverCandidates = ['cover.svg', 'cover.png', 'cover.jpg', 'cover.jpeg', 'cover.webp'];
+      for (const candidate of coverCandidates) {
+        if (fs.existsSync(path.join(entryPath, candidate))) {
+          (meta as ExampleMeta).cover = candidate;
+          break;
+        }
+      }
     }
 
     examples.push({

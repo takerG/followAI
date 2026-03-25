@@ -316,6 +316,7 @@ code{
 /* ===== Scroll Reveal ===== */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
 
 /* ===== Responsive ===== */
 @media(max-width:768px){
@@ -1062,7 +1063,7 @@ code{
     const windowH = window.innerHeight;
     reveals.forEach(el => {
       const rect = el.getBoundingClientRect();
-      if (rect.top < windowH - 60) {
+      if (rect.top < windowH + 20) {
         el.classList.add('visible');
       }
     });
@@ -1075,7 +1076,7 @@ code{
     let delay = 0;
     reveals.forEach(el => {
       const rect = el.getBoundingClientRect();
-      if (rect.top < windowH - 60) {
+      if (rect.top < windowH * 1.5) {
         setTimeout(() => el.classList.add('visible'), delay);
         delay += 80;
       }
@@ -1087,6 +1088,13 @@ code{
 
   // Initial reveal with stagger
   staggerReveal();
+
+  // Safety net: force-reveal any remaining hidden elements after 2s
+  setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => {
+      el.classList.add('visible');
+    });
+  }, 2000);
 
   // ===== Smooth hover glow on tip cards =====
   document.querySelectorAll('.tip-card').forEach(card => {

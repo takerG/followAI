@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 工作流 — 高效 AI 编程协作指南</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c-primary:#f97316;--c-primary-light:#fb923c;--c-primary-dark:#ea580c;
+  --c-accent:#f59e0b;--c-accent-light:#fbbf24;
+  --c-success:#10b981;--c-danger:#ef4444;
+  --c-bg:#fffbf5;--c-surface:#fff;--c-surface-alt:#fef7ee;
+  --c-text:#1c1917;--c-text-secondary:#57534e;--c-text-muted:#a8a29e;
+  --c-border:#f5e6d3;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.03);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.08);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.7;overflow-x:hidden}
+a{color:var(--c-primary);text-decoration:none}
+
+/* ===== NAV ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,251,245,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--c-border);transition:var(--transition)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-weight:700;font-size:1.1rem;background:linear-gradient(135deg,var(--c-primary),var(--c-primary-dark));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:.25rem}
+.nav-links a{padding:.4rem .75rem;border-radius:var(--radius-sm);font-size:.875rem;color:var(--c-text-secondary);transition:var(--transition)}
+.nav-links a:hover,.nav-links a.active{background:var(--c-surface-alt);color:var(--c-primary)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 1.5rem 4rem;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 30%,#ffedd5 60%,#fffbf5 100%);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.12),transparent 70%);top:-200px;right:-100px;animation:float 8s ease-in-out infinite}
+.hero::after{content:"";position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1),transparent 70%);bottom:-100px;left:-50px;animation:float 10s ease-in-out infinite reverse}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+.hero-content{position:relative;z-index:1;max-width:720px}
+.hero-badge{display:inline-block;padding:.35rem 1rem;border-radius:50px;background:rgba(249,115,22,.1);color:var(--c-primary);font-size:.8rem;font-weight:600;margin-bottom:1.5rem;letter-spacing:.5px}
+.hero h1{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;line-height:1.2;margin-bottom:1rem}
+.hero h1 .gradient{background:linear-gradient(135deg,var(--c-primary),#ea580c,var(--c-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:1.15rem;color:var(--c-text-secondary);max-width:560px;margin:0 auto 2rem}
+.hero-actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;border-radius:var(--radius);font-size:.95rem;font-weight:600;border:none;cursor:pointer;transition:var(--transition)}
+.btn-primary{background:var(--c-primary);color:#fff;box-shadow:0 2px 12px rgba(249,115,22,.3)}
+.btn-primary:hover{background:var(--c-primary-dark);transform:translateY(-1px);box-shadow:0 4px 20px rgba(249,115,22,.4)}
+.btn-outline{background:var(--c-surface);color:var(--c-text);border:1.5px solid var(--c-border)}
+.btn-outline:hover{border-color:var(--c-primary);color:var(--c-primary)}
+.hero-stats{display:flex;gap:2.5rem;justify-content:center;margin-top:3rem}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:1.75rem;font-weight:800;color:var(--c-primary)}
+.hero-stat .label{font-size:.8rem;color:var(--c-text-muted)}
+
+/* ===== SECTIONS ===== */
+section{padding:5rem 1.5rem}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-header{text-align:center;margin-bottom:3rem}
+.section-header h2{font-size:clamp(1.5rem,3vw,2.25rem);font-weight:700;margin-bottom:.5rem}
+.section-header p{color:var(--c-text-secondary);max-width:560px;margin:0 auto}
+.section-alt{background:var(--c-surface-alt)}
+
+/* ===== RACE FRAMEWORK ===== */
+.race-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+@media(max-width:1024px){.race-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.race-grid{grid-template-columns:1fr}}
+.race-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden}
+.race-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c-primary);transform:scaleX(0);transition:var(--transition);transform-origin:left}
+.race-card:hover::before,.race-card.active::before{transform:scaleX(1)}
+.race-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.race-card.active{border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.race-letter{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;font-size:1.35rem;font-weight:800;color:#fff;transition:var(--transition)}
+.race-card:nth-child(1) .race-letter{background:linear-gradient(135deg,#f97316,#fb923c)}
+.race-card:nth-child(2) .race-letter{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.race-card:nth-child(3) .race-letter{background:linear-gradient(135deg,#ea580c,#f97316)}
+.race-card:nth-child(4) .race-letter{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.race-title{font-weight:700;font-size:.95rem;margin-bottom:.25rem}
+.race-sub{font-size:.8rem;color:var(--c-text-muted)}
+.race-detail{margin-top:2rem;background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:2rem;display:none;animation:fadeUp .4s ease}
+.race-detail.show{display:block}
+.race-detail h3{font-size:1.25rem;margin-bottom:.75rem;color:var(--c-primary-dark)}
+.race-detail p{color:var(--c-text-secondary);margin-bottom:1rem;line-height:1.8}
+.race-detail-section{margin-top:1.25rem}
+.race-detail-section h4{font-size:.95rem;font-weight:600;margin-bottom:.5rem;color:var(--c-text)}
+.race-example{background:var(--c-surface-alt);border-radius:var(--radius-sm);padding:1rem;margin-top:.75rem}
+.race-example pre{font-size:.85rem;white-space:pre-wrap;word-break:break-word;font-family:"Cascadia Code","Fira Code","JetBrains Mono",monospace;line-height:1.6}
+.race-example-label{font-size:.75rem;font-weight:600;color:var(--c-primary);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.5px}
+.race-tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.race-tool-tag{padding:.25rem .65rem;border-radius:50px;background:rgba(249,115,22,.08);color:var(--c-primary-dark);font-size:.78rem;font-weight:500}
+
+/* ===== CONTEXT MANAGEMENT ===== */
+.ctx-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem}
+@media(max-width:768px){.ctx-grid{grid-template-columns:1fr}}
+.ctx-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition)}
+.ctx-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.ctx-icon{width:44px;height:44px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.75rem;background:rgba(249,115,22,.08)}
+.ctx-card h4{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.ctx-card p{font-size:.85rem;color:var(--c-text-secondary);line-height:1.6;margin-bottom:.75rem}
+.ctx-example{padding:.65rem .85rem;background:var(--c-surface-alt);border-radius:var(--radius-sm);font-size:.8rem;font-family:"Cascadia Code","Fira Code",monospace;line-height:1.5;color:var(--c-text-secondary);white-space:pre-wrap;word-break:break-word}
+
+/* ===== COMPARISONS ===== */
+.compare-tabs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+.compare-tab{padding:.5rem 1.25rem;border-radius:50px;border:1.5px solid var(--c-border);background:var(--c-surface);cursor:pointer;font-size:.875rem;font-weight:500;transition:var(--transition)}
+.compare-tab.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+.compare-tab:hover:not(.active){border-color:var(--c-primary-light)}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+@media(max-width:768px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border-radius:var(--radius-lg);border:1.5px solid var(--c-border);background:var(--c-surface);overflow:hidden;transition:var(--transition);opacity:0;transform:translateY(16px);animation:fadeUp .5s ease forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.compare-card.bad{border-color:#fecaca}
+.compare-card.good{border-color:#bbf7d0}
+.compare-label{padding:.6rem 1rem;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.compare-card.bad .compare-label{background:#fef2f2;color:var(--c-danger)}
+.compare-card.good .compare-label{background:#f0fdf4;color:var(--c-success)}
+.compare-body{padding:1.25rem}
+.compare-body pre{background:var(--c-surface-alt);padding:1rem;border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;font-family:"Cascadia Code","Fira Code","JetBrains Mono",monospace}
+.compare-why{margin-top:1rem;padding:.75rem 1rem;border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6}
+.compare-card.bad .compare-why{background:#fef2f2;color:#991b1b}
+.compare-card.good .compare-why{background:#f0fdf4;color:#166534}
+
+/* ===== TOOL MATRIX ===== */
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+@media(max-width:900px){.tool-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.tool-grid{grid-template-columns:1fr}}
+.tool-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.25rem;transition:var(--transition)}
+.tool-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--c-primary-light)}
+.tool-card-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.tool-name{font-weight:700;font-size:1rem}
+.tool-badge{padding:.15rem .55rem;border-radius:50px;font-size:.7rem;font-weight:600;background:rgba(249,115,22,.1);color:var(--c-primary)}
+.tool-desc{font-size:.85rem;color:var(--c-text-secondary);line-height:1.6;margin-bottom:.75rem}
+.tool-when{padding:.6rem .8rem;background:var(--c-surface-alt);border-radius:var(--radius-sm);font-size:.8rem;line-height:1.5;margin-bottom:.6rem}
+.tool-when strong{color:var(--c-text);font-weight:600}
+.tool-example{padding:.5rem .75rem;background:#1c1917;color:#fde68a;border-radius:var(--radius-sm);font-size:.78rem;font-family:"Cascadia Code","Fira Code",monospace;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.tool-icon{width:38px;height:38px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.tool-card:nth-child(1) .tool-icon{background:#fff7ed;color:#f97316}
+.tool-card:nth-child(2) .tool-icon{background:#fefce8;color:#eab308}
+.tool-card:nth-child(3) .tool-icon{background:#fef2f2;color:#ef4444}
+.tool-card:nth-child(4) .tool-icon{background:#f0fdf4;color:#10b981}
+.tool-card:nth-child(5) .tool-icon{background:#eef2ff;color:#6366f1}
+.tool-card:nth-child(6) .tool-icon{background:#fdf4ff;color:#a855f7}
+
+/* ===== WORKFLOW TIPS ===== */
+.tips-tabs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+.tips-tab{padding:.55rem 1.25rem;border-radius:50px;border:1.5px solid var(--c-border);background:var(--c-surface);cursor:pointer;font-size:.875rem;font-weight:500;transition:var(--transition);display:flex;align-items:center;gap:.4rem}
+.tips-tab.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+.tips-tab:hover:not(.active){border-color:var(--c-primary-light)}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+@media(max-width:600px){.tips-grid{grid-template-columns:1fr}}
+.tip-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition);animation:fadeUp .4s ease forwards;opacity:0}
+.tip-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.tip-card:nth-child(1){animation-delay:.05s}
+.tip-card:nth-child(2){animation-delay:.1s}
+.tip-card:nth-child(3){animation-delay:.15s}
+.tip-card:nth-child(4){animation-delay:.2s}
+.tip-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.75rem}
+.tip-card h4{font-size:1rem;margin-bottom:.5rem}
+.tip-card p{font-size:.85rem;color:var(--c-text-secondary);line-height:1.6}
+.tip-example{margin-top:.75rem;padding:.65rem .85rem;background:var(--c-surface-alt);border-radius:var(--radius-sm);font-size:.8rem;font-family:"Cascadia Code","Fira Code",monospace;line-height:1.5;color:var(--c-text-secondary);white-space:pre-wrap;word-break:break-word}
+.cat-planning .tip-icon{background:#fff7ed;color:#f97316}
+.cat-coding .tip-icon{background:#fefce8;color:#eab308}
+.cat-debugging .tip-icon{background:#fef2f2;color:#ef4444}
+.cat-reviewing .tip-icon{background:#f0fdf4;color:#10b981}
+
+/* ===== CHEAT SHEET ===== */
+.cheat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+@media(max-width:1024px){.cheat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.cheat-grid{grid-template-columns:1fr}}
+.cheat-card{background:var(--c-surface);border:1.5px solid var(--c-border);border-radius:var(--radius-lg);padding:1.5rem}
+.cheat-card:hover{box-shadow:var(--shadow)}
+.cheat-card h4{font-size:.95rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.cheat-list{list-style:none}
+.cheat-list li{padding:.5rem 0;border-bottom:1px solid var(--c-border);font-size:.85rem;display:flex;align-items:flex-start;gap:.5rem;line-height:1.5}
+.cheat-list li:last-child{border-bottom:none}
+.cheat-list li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--c-primary);margin-top:.5rem;flex-shrink:0}
+
+/* ===== FOOTER ===== */
+.footer{text-align:center;padding:3rem 1.5rem;border-top:1px solid var(--c-border);color:var(--c-text-muted);font-size:.85rem}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">Claude Code 工作流</div>
+    <div class="nav-links">
+      <a href="#race">RACE 框架</a>
+      <a href="#context">上下文管理</a>
+      <a href="#compare">对比案例</a>
+      <a href="#tools">工具矩阵</a>
+      <a href="#tips">技巧库</a>
+      <a href="#cheat">速查表</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-badge">AI 编程最佳实践</div>
+    <h1>掌握 <span class="gradient">Claude Code</span> 工作流</h1>
+    <p>从 RACE 框架到上下文管理，系统掌握与 AI 编程助手高效协作的方法，让每一次对话都产出高质量代码。</p>
+    <div class="hero-actions">
+      <a href="#race" class="btn btn-primary">开始学习 ↓</a>
+      <a href="#tools" class="btn btn-outline">工具速查</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">4</div><div class="label">核心原则</div></div>
+      <div class="hero-stat"><div class="num">10+</div><div class="label">工具技巧</div></div>
+      <div class="hero-stat"><div class="num">6+</div><div class="label">实践模式</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- RACE FRAMEWORK -->
+<section id="race" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>RACE 框架</h2>
+      <p>四步循环，结构化使用 Claude Code 的核心方法论</p>
+    </div>
+    <div class="race-grid reveal" id="raceGrid"></div>
+    <div class="race-detail" id="raceDetail"></div>
+  </div>
+</section>
+
+<!-- CONTEXT MANAGEMENT -->
+<section id="context">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>上下文管理最佳实践</h2>
+      <p>高效管理上下文是提升 Claude Code 输出质量的关键</p>
+    </div>
+    <div class="ctx-grid reveal" id="ctxGrid"></div>
+  </div>
+</section>
+
+<!-- COMPARISONS -->
+<section id="compare" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>反模式 vs 最佳实践</h2>
+      <p>通过对比学习，避开常见陷阱，掌握高效协作方式</p>
+    </div>
+    <div class="compare-tabs reveal" id="compareTabs"></div>
+    <div class="compare-grid reveal" id="compareGrid"></div>
+  </div>
+</section>
+
+<!-- TOOL MATRIX -->
+<section id="tools">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>工具使用矩阵</h2>
+      <p>了解每个工具的最佳使用场景，选择合适的工具事半功倍</p>
+    </div>
+    <div class="tool-grid reveal" id="toolGrid"></div>
+  </div>
+</section>
+
+<!-- WORKFLOW TIPS -->
+<section id="tips" class="section-alt">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>场景化技巧库</h2>
+      <p>按工作阶段分类的实用技巧，即学即用</p>
+    </div>
+    <div class="tips-tabs reveal" id="tipsTabs"></div>
+    <div class="tips-grid reveal" id="tipsGrid"></div>
+  </div>
+</section>
+
+<!-- CHEAT SHEET -->
+<section id="cheat">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <h2>速查表</h2>
+      <p>核心规则一目了然，收藏备查</p>
+    </div>
+    <div class="cheat-grid reveal">
+      <div class="cheat-card">
+        <h4>✅ 高效协作习惯</h4>
+        <ul class="cheat-list">
+          <li>每次改动前先让 Claude 阅读相关代码</li>
+          <li>提供具体的文件路径、行号和函数名</li>
+          <li>分步骤迭代，每步只聚焦一个改动</li>
+          <li>描述"当前行为"和"期望行为"的差异</li>
+          <li>修改后立即运行测试验证</li>
+          <li>使用 CLAUDE.md 固化项目规范</li>
+          <li>不确定时要求 Claude 先提问再行动</li>
+          <li>用 Edit 工具做精确修改，避免整文件重写</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>❌ 常见低效模式</h4>
+        <ul class="cheat-list">
+          <li>用"帮我改一下""优化一下"等模糊指令</li>
+          <li>一次性要求实现多个不相关的功能</li>
+          <li>跳过阅读代码库直接开始编写</li>
+          <li>报错后不提供错误信息就要求重试</li>
+          <li>忽略类型检查和测试结果</li>
+          <li>不给出上下文就假设 AI 理解项目</li>
+          <li>堆积多个改动后才验证</li>
+          <li>每次新会话都重复解释项目背景</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>💡 进阶技巧</h4>
+        <ul class="cheat-list">
+          <li>先让 Claude 输出实现计划，确认后再编码</li>
+          <li>复杂任务使用 /autoplan 自动生成方案</li>
+          <li>利用 Memory Files 跨会话保持上下文</li>
+          <li>用 Grep 搜索相似实现作为参考模式</li>
+          <li>要求 Claude 解释设计决策和权衡</li>
+          <li>使用 .claudeignore 排除干扰文件</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>🔄 RACE 循环速记</h4>
+        <ul class="cheat-list">
+          <li><strong>R — Read</strong>：先读代码，理解现有架构</li>
+          <li><strong>A — Ask</strong>：有疑问先提问，不要猜测</li>
+          <li><strong>C — Code</strong>：编写代码，优先用 Edit</li>
+          <li><strong>E — Evaluate</strong>：跑测试，验证改动</li>
+          <li>循环往复，每轮改进一点</li>
+          <li>验证失败 → 回到 R 分析根因</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>🛠️ 工具选择速记</h4>
+        <ul class="cheat-list">
+          <li><strong>Read</strong> → 查看文件内容和代码逻辑</li>
+          <li><strong>Glob</strong> → 按名称模式找文件</li>
+          <li><strong>Grep</strong> → 在代码中搜索文本</li>
+          <li><strong>LSP</strong> → 查看类型定义和引用</li>
+          <li><strong>Edit</strong> → 修改现有文件（首选）</li>
+          <li><strong>Write</strong> → 创建全新文件</li>
+          <li><strong>Bash</strong> → 运行命令和测试</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>📐 提示词结构模板</h4>
+        <ul class="cheat-list">
+          <li><strong>目标</strong>：我想要实现 [具体功能]</li>
+          <li><strong>文件</strong>：涉及文件 [路径列表]</li>
+          <li><strong>上下文</strong>：技术栈 [框架/版本]</li>
+          <li><strong>参考</strong>：请参考 [现有代码]的风格</li>
+          <li><strong>约束</strong>：需要满足 [具体条件]</li>
+          <li><strong>验证</strong>：完成后运行 [测试命令]</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>Claude Code 工作流交互式指南 · 让 AI 编程协作更高效</p>
+</footer>
+
+<script>
+/* ===== DATA: RACE ===== */
+var RACE_DATA = [
+  {
+    letter: "R", title: "Read", sub: "先阅读代码库",
+    desc: "在编写任何代码之前，先让 Claude Code 阅读并理解现有代码库。使用 Read、Glob、Grep 工具浏览项目结构、阅读关键文件、搜索相关代码。充分理解现有架构和代码风格后，后续的修改才能与项目保持一致。",
+    details: [
+      {
+        heading: "为什么先读？",
+        text: "Claude Code 没有你的项目上下文。跳过阅读直接编写代码，往往会导致生成的代码与项目风格不一致、重复造轮子、或忽略现有的工具函数。先读再写，是避免返工的最佳策略。"
+      },
+      {
+        heading: "推荐的阅读顺序",
+        text: "1. 先用 Glob 浏览项目目录结构\n2. 用 Read 阅读核心配置文件（package.json、tsconfig 等）\n3. 用 Grep 搜索相关模块和已有函数\n4. 阅读待修改文件的上下文代码\n5. 查看相关测试文件了解预期行为"
+      },
+      {
+        heading: "常见错误",
+        text: "直接说"帮我写一个 UserService"而不先让 Claude 看看项目中已有的 Service 是怎么写的。结果生成的代码风格、命名、错误处理方式都与项目不一致。"
+      }
+    ],
+    tools: ["Read", "Glob", "Grep"],
+    example: "先阅读 src/services/ 目录下的现有服务文件，\n了解项目的服务层架构和命名规范，\n然后再帮我新建一个 NotificationService。\n\n请特别关注：\n- 错误处理模式\n- 依赖注入方式\n- 日志记录规范"
+  },
+  {
+    letter: "A", title: "Ask", sub: "提出问题",
+    desc: "当需求不明确或有多种实现方案时，主动澄清需求。好的 AI 助手不会在模糊指令下猜测，而是通过提问确保理解正确。这一步能大幅减少因误解导致的返工。",
+    details: [
+      {
+        heading: "何时应该提问？",
+        text: "• 需求描述含糊（如"优化一下""改好一点"）\n• 存在多种合理的实现方案需要决策\n• 涉及业务逻辑的关键判断\n• 不确定是否有现有代码可以复用\n• 技术选型有多种候选方案"
+      },
+      {
+        heading: "如何引导 Claude 提问",
+        text: "在提示词中明确说"如果有任何不清楚的地方，请先提问而不是猜测"。也可以在 CLAUDE.md 中设置全局指令，让它在每次开始编码前确认需求。"
+      },
+      {
+        heading: "提问的价值",
+        text: "每一个好的问题都能节省 10 分钟的返工时间。与其让 AI 猜错后重做，不如花 30 秒回答一个澄清问题。这是最高 ROI 的投入。"
+      }
+    ],
+    tools: ["AskUserQuestion"],
+    example: "帮我实现用户认证模块。\n\n在开始之前，请先确认以下问题：\n1. 使用 JWT 还是 Session 认证？\n2. 是否需要 refresh token 机制？\n3. 密码策略有哪些要求？\n4. 是否需要支持第三方登录（OAuth）？"
+  },
+  {
+    letter: "C", title: "Code", sub: "编写代码",
+    desc: "在充分理解代码库和明确需求后，使用 Edit 和 Write 工具编写代码。Edit 用于修改现有文件（精确替换），Write 用于创建新文件。优先使用 Edit 工具进行增量修改，保持改动最小化。",
+    details: [
+      {
+        heading: "Edit vs Write 的选择",
+        text: "Edit 工具执行精确的字符串替换，只修改需要改的部分，安全且可控。Write 工具会覆盖整个文件，适合创建全新文件。修改现有代码时务必优先使用 Edit，避免意外覆盖其他改动。"
+      },
+      {
+        heading: "编码最佳实践",
+        text: "• 每次只做一个改动，避免大范围重写\n• 保持与项目现有代码风格完全一致\n• 添加必要的类型定义和注释\n• 修改后立即验证，不要堆积多个改动\n• 新增代码要有对应的测试用例"
+      },
+      {
+        heading: "改动最小化原则",
+        text: "尽量用最少的代码改动达成目标。不要"顺手"重构不相关的代码——那会引入不必要的风险，也让 Code Review 变得困难。"
+      }
+    ],
+    tools: ["Edit", "Write", "Bash"],
+    example: "请使用 Edit 工具修改 src/api/users.ts，\n在 getUserById 函数中添加 Redis 缓存逻辑。\n\n要求：\n- 不要重写整个文件，只修改需要改的部分\n- 缓存过期时间 300 秒\n- 缓存未命中时查库并回填缓存\n- 保持与现有代码风格一致"
+  },
+  {
+    letter: "E", title: "Evaluate", sub: "评估验证",
+    desc: "编写代码后，立即运行测试、执行 lint 检查、验证功能是否正确。使用 Bash 工具运行命令，查看输出结果。不要跳过验证步骤——及时发现问题比事后修复成本低得多。",
+    details: [
+      {
+        heading: "验证检查清单",
+        text: "• 运行相关的单元测试\n• 执行 TypeScript 类型检查（tsc --noEmit）\n• 运行 lint 检查（eslint / prettier）\n• 手动测试关键流程路径\n• 检查终端输出有无错误或警告\n• 确认 CI 构建是否通过"
+      },
+      {
+        heading: "发现问题后怎么做",
+        text: "如果验证失败，回到 Read 步骤分析错误根因，而不是盲目重试。先理解错误信息，再查看相关代码，最后制定修复方案。这正是 RACE 循环的意义——失败后回到 R 而不是留在 C。"
+      },
+      {
+        heading: "验证的粒度",
+        text: "每做完一个小改动就立即验证，而不是堆积多个改动后一起验证。小步快跑的策略能让你快速定位哪个改动引入了问题。"
+      }
+    ],
+    tools: ["Bash"],
+    example: "修改完成后，请运行以下命令依次验证：\n\n1. npx tsc --noEmit            → 类型检查\n2. npm test -- --related        → 相关测试\n3. npx eslint src/api/users.ts  → 代码规范\n\n如果有错误，请先分析原因，\n然后回到 Read 步骤查看相关代码后再修复。"
+  }
+];
+
+/* ===== DATA: CONTEXT ===== */
+var CTX_DATA = [
+  {
+    icon: "\uD83D\uDCCB",
+    title: "CLAUDE.md 配置项目指令",
+    desc: "在项目根目录创建 CLAUDE.md 文件，写入项目规范、技术栈、编码约定等信息。Claude Code 每次启动时会自动读取此文件作为上下文，无需每次重复说明。",
+    example: "# CLAUDE.md\n\n## 技术栈\nTypeScript 5.3, React 18, Next.js 14\n\n## 编码规范\n- 使用函数组件 + Hooks\n- 命名使用 camelCase\n- 接口以 I 前缀命名如 IUser\n- 所有 API 使用 zod 做参数校验\n\n## 测试\n- 使用 Vitest + React Testing Library\n- 新功能必须有单元测试"
+  },
+  {
+    icon: "\uD83E\uDDE0",
+    title: "Memory Files 持久化知识",
+    desc: "使用 Memory 文件存储跨会话的知识，如项目架构决策、已知 Bug、待办事项等。Claude Code 可在后续会话中引用这些信息，避免重复沟通同样的背景。",
+    example: "# 架构决策记录\n\n## ADR-001: 状态管理方案\n- 选择: Zustand 替代 Redux\n- 原因: 更轻量、TS 支持更好\n- 日期: 2025-03-20\n- 影响: 所有新组件使用 useStore"
+  },
+  {
+    icon: "\uD83D\uDCCA",
+    title: "Token 预算管理技巧",
+    desc: "合理控制每次对话的上下文大小。避免一次性粘贴大量代码，让 Claude 按需使用 Read 工具读取。分批处理复杂任务，使用摘要和文件路径引用代替完整代码粘贴。",
+    example: "高效策略：\n- 用文件路径+行号引用代码\n- 分步骤处理复杂任务\n- 及时使用 /clear 清理上下文\n- 让 Claude 按需 Read 而非你粘贴\n- 长对话后创建新会话续接"
+  },
+  {
+    icon: "\uD83D\uDEAB",
+    title: "使用 .claudeignore 排除干扰",
+    desc: "创建 .claudeignore 文件排除不相关的文件和目录（如 node_modules、dist、.git），减少搜索噪音，让 Claude Code 聚焦于真正需要关注的源代码。",
+    example: "# .claudeignore\nnode_modules/\ndist/\nbuild/\n.next/\n.git/\n*.min.js\n*.map\ncoverage/\n.env*\n*.lock"
+  }
+];
+
+/* ===== DATA: COMPARISONS ===== */
+var COMPARISONS = [
+  {
+    id: "vague", label: "模糊 vs 具体",
+    bad: {
+      prompt: "帮我改一下代码",
+      reason: "没有指定哪个文件、哪行代码、要改成什么。Claude Code 无法定位目标，只能猜测，极易产生不符合预期的改动。"
+    },
+    good: {
+      prompt: "请修改 src/utils/format.ts 第 42 行的\nformatDate 函数，将日期格式从 YYYY/MM/DD\n改为 YYYY-MM-DD。\n\n当前行为：formatDate(new Date()) \u2192 \"2025/03/23\"\n期望行为：formatDate(new Date()) \u2192 \"2025-03-23\"\n\n使用 Edit 工具精确替换分隔符即可。",
+      reason: "明确了文件路径、行号、函数名、当前行为、期望行为和具体的修改方式。"
+    }
+  },
+  {
+    id: "batch", label: "贪多 vs 分步",
+    bad: {
+      prompt: "帮我实现一个完整的用户管理系统，\n包括注册、登录、权限控制、个人资料、\n头像上传、邮箱验证、密码重置、\n双因素认证、操作日志。",
+      reason: "一次性要求太多功能，很容易遗漏细节、产生不一致的代码结构，出错后也很难定位问题。"
+    },
+    good: {
+      prompt: "我们分步实现用户管理系统。\n\n第一步：先实现用户注册 API。\n- POST /api/auth/register\n- 请求体：{ email, password, name }\n- 使用 bcrypt 加密密码（salt rounds = 12）\n- 邮箱唯一性校验，已存在返回 409\n- 成功返回 201 + JWT token\n\n完成并通过测试后我们再进行下一步。",
+      reason: "分步骤迭代，每步只聚焦一个功能点，确保质量后再继续。小步快跑，持续集成。"
+    }
+  },
+  {
+    id: "error", label: "盲试 vs 根因分析",
+    bad: {
+      prompt: "还是报错，再试一次。",
+      reason: "不分析错误原因就重试，AI 可能会反复在同一个方向上犯错，浪费时间和 Token。"
+    },
+    good: {
+      prompt: "TypeScript 报错：\nTS2345: Argument of type 'string' is not\nassignable to parameter of type 'number'.\n\n出错位置：src/services/order.ts:87\n代码行：calculateTotal(order.quantity)\n\n请先用 Read 工具查看：\n1. calculateTotal 的函数签名（参数类型）\n2. order.quantity 的类型定义\n然后分析类型不匹配的根因，再修复。",
+      reason: "提供完整的错误信息和位置，要求先分析根因再修复，遵循 RACE 循环的 R \u2192 E 回环。"
+    }
+  },
+  {
+    id: "context", label: "无上下文 vs 有上下文",
+    bad: {
+      prompt: "写一个缓存函数",
+      reason: "什么语言？用什么缓存策略？过期时间？容量限制？并发安全？一切都没有说明。"
+    },
+    good: {
+      prompt: "请在 src/lib/cache.ts 中实现一个 LRU 缓存类：\n\n技术栈：TypeScript 5.3（严格模式）\n接口：get(key), set(key, value, ttl?), delete(key)\n约束：\n- 最大容量 1000 个条目\n- 支持 TTL 过期（默认 300 秒）\n- 线程安全不要求（单线程 Node.js 环境）\n- 请参考 src/lib/store.ts 中的现有代码风格",
+      reason: "给出了完整的技术上下文、接口定义、约束条件和风格参考。"
+    }
+  },
+  {
+    id: "verify", label: "跳过验证 vs 验证驱动",
+    bad: {
+      prompt: "改完了吗？那继续下一个功能。",
+      reason: "没有验证当前改动是否正确就继续，可能在错误的基础上堆积更多代码，后续修复成本指数级增长。"
+    },
+    good: {
+      prompt: "改完后请执行以下验证：\n\n1. npm test -- src/services/order.test.ts\n2. npx tsc --noEmit\n3. curl -X POST localhost:3000/api/orders \\\n   -H 'Content-Type: application/json' \\\n   -d '{\"items\":[{\"id\":1,\"qty\":2}]}'\n\n全部通过后再进行下一步。",
+      reason: "每步改动都有明确的验证标准，确保在正确的基础上继续前进。"
+    }
+  }
+];
+
+/* ===== DATA: TIPS ===== */
+var TIPS_DATA = {
+  planning: {
+    label: "规划阶段", icon: "\uD83D\uDCDD",
+    tips: [
+      {
+        title: "先让 Claude 输出实现计划",
+        desc: "对于复杂任务，先要求 Claude 给出分步实现方案，确认后再开始编码。这能避免方向性错误。",
+        example: "请先给出实现「订单导出为 Excel」功能的\n实现步骤（不写代码），包括：\n- 需要修改哪些文件\n- 数据流向\n- 依赖的第三方库\n我确认后再开始编码。"
+      },
+      {
+        title: "明确定义验收标准",
+        desc: "在开始编码前，列出功能的验收条件。这帮助 Claude 理解"完成"的定义，也方便后续验证。",
+        example: "验收标准：\n1. 导出文件格式为 .xlsx\n2. 包含订单号、商品、金额、时间列\n3. 支持按日期范围筛选导出\n4. 超过 1 万行时分页导出\n5. 导出过程显示进度条"
+      },
+      {
+        title: "利用 Glob 了解项目结构",
+        desc: "开始新任务前，先让 Claude 用 Glob 浏览相关目录，理解项目的文件组织方式和命名惯例。",
+        example: "请先用 Glob 查看以下目录结构：\n- src/services/  → 了解服务层组织\n- src/api/       → 了解 API 路由结构\n- src/types/     → 了解类型定义方式\n然后告诉我新功能应该放在哪里。"
+      },
+      {
+        title: "参考已有的类似实现",
+        desc: "让 Claude 先找到项目中类似的功能实现作为参考模板，新代码就能保持风格一致。",
+        example: "项目中已有「用户导出」功能，\n请先用 Grep 找到它的实现位置，\n阅读代码后以它为模板来实现\n「订单导出」功能，保持风格一致。"
+      }
+    ]
+  },
+  coding: {
+    label: "编码阶段", icon: "\u26A1",
+    tips: [
+      {
+        title: "优先用 Edit 做精确修改",
+        desc: "修改现有文件时，使用 Edit 工具做精确的字符串替换，而不是用 Write 重写整个文件。这更安全、更可控。",
+        example: "请用 Edit 工具只修改 handleSubmit 函数中的\n验证逻辑部分（约第 45-60 行），\n不要改动文件中的其他代码。"
+      },
+      {
+        title: "一次一个改动",
+        desc: "不要在一条指令中要求多个不相关的修改。每次只做一个改动并验证，这样出问题时能快速定位。",
+        example: "第一步：先添加输入校验逻辑\n→ 验证通过后\n第二步：再添加错误处理\n→ 验证通过后\n第三步：最后添加日志记录"
+      },
+      {
+        title: "提供代码风格参考",
+        desc: "指定项目中的代码风格参考文件，让 Claude 生成的代码自然融入现有代码库。",
+        example: "新代码的风格请参考 src/services/user.service.ts：\n- 使用 class 语法 + 依赖注入\n- 方法命名用 camelCase\n- 错误使用自定义 AppError 类\n- 所有公开方法都有 JSDoc 注释"
+      },
+      {
+        title: "指定错误处理方式",
+        desc: "明确告诉 Claude 如何处理错误和边界情况，避免生成缺少错误处理的脆弱代码。",
+        example: "错误处理要求：\n- 网络请求用 try-catch 包裹\n- 超时设置 5000ms\n- 失败后最多重试 3 次\n- 使用 AppError 抛出业务异常\n- 记录错误日志到 logger.error()"
+      }
+    ]
+  },
+  debugging: {
+    label: "调试阶段", icon: "\uD83D\uDD0D",
+    tips: [
+      {
+        title: "提供完整错误信息",
+        desc: "不要只说"报错了"，把完整的错误消息、stack trace、相关代码都提供给 Claude，帮助它快速定位。",
+        example: "运行 npm test 时出错：\n\nError: connect ECONNREFUSED 127.0.0.1:5432\n    at TCPConnectWrap.afterConnect\n    at src/db/connection.ts:23\n\n环境：Node 18, PostgreSQL 15\n本地 DB 运行状态：已确认启动"
+      },
+      {
+        title: "描述预期 vs 实际行为",
+        desc: "清晰地区分"我期望发生什么"和"实际发生了什么"，帮助 Claude 快速理解问题的本质。",
+        example: "预期行为：\n点击「保存」按钮后，数据写入数据库，\n页面显示成功提示并跳转到列表页。\n\n实际行为：\n点击后按钮变灰，约 3 秒后页面无反应，\n控制台报 CORS 错误。Network 面板显示\n请求状态为 OPTIONS 403。"
+      },
+      {
+        title: "说明已尝试的方案",
+        desc: "告诉 Claude 你已经试过什么和结果如何，避免它重复给出你已排除的方案。",
+        example: "问题：API 响应时间从 100ms 涨到 3s\n\n已排查：\n1. 数据库慢查询日志 → 无慢查询\n2. Redis 连接状态 → 正常\n3. 网络延迟 → <1ms\n4. 应用内存 → 正常范围\n\n怀疑是中间件链中某个环节阻塞。"
+      },
+      {
+        title: "使用 RACE 循环排查",
+        desc: "遇到复杂 Bug 时，用 RACE 方法：先 Read 相关代码，Ask 明确问题边界，尝试 Code 修复，Evaluate 验证结果。",
+        example: "请按以下步骤排查这个内存泄漏：\n\n1. Read: 查看 src/cache/ 下的所有缓存实现\n2. 用 Grep 搜索 setInterval/addEventListener\n   （可能的泄漏点）\n3. 分析后给出修复方案\n4. 修复后运行内存 profiling 验证"
+      }
+    ]
+  },
+  reviewing: {
+    label: "审查阶段", icon: "\u2705",
+    tips: [
+      {
+        title: "让 Claude 做代码自审",
+        desc: "写完代码后，让 Claude 回顾自己的改动，检查是否有遗漏的边界情况、类型错误或性能问题。",
+        example: "请回顾刚才的所有改动，检查：\n1. 是否有遗漏的边界条件？\n2. 类型定义是否完整？\n3. 是否有潜在的性能问题？\n4. 错误处理是否覆盖所有异常路径？"
+      },
+      {
+        title: "要求解释设计决策",
+        desc: "对于关键的实现选择，让 Claude 解释为什么这样做、有什么替代方案、权衡是什么。",
+        example: "你选择使用 Map 而不是普通 Object\n来存储缓存数据，请解释：\n1. 这个选择的理由是什么？\n2. 在什么场景下应该用 Object？\n3. 对 GC 性能有什么影响？"
+      },
+      {
+        title: "检查测试覆盖",
+        desc: "每次改动后，确认相关的测试是否需要更新，是否有新的场景需要补充测试用例。",
+        example: "刚才的改动影响了 OrderService，请检查：\n1. 现有测试是否还能通过？\n2. 新增的缓存逻辑是否需要新测试？\n3. 是否有边界情况没有覆盖？\n如果需要补充测试，请直接编写。"
+      },
+      {
+        title: "确认改动范围最小化",
+        desc: "审查改动时确认没有"顺手"修改不相关的代码。改动范围越小，引入回归 Bug 的风险越低。",
+        example: "请确认这次改动只涉及：\n- src/services/order.ts（添加缓存）\n- src/services/order.test.ts（新增测试）\n\n没有修改其他不相关的文件，\n也没有改变任何公开 API 的签名。"
+      }
+    ]
+  }
+};
+
+/* ===== DATA: TOOLS ===== */
+var TOOLS_DATA = [
+  {
+    icon: "\uD83D\uDCD6", name: "Read", badge: "读取",
+    desc: "读取指定文件的内容。支持按行号范围读取大文件的特定部分，也可以读取图片和 PDF。",
+    when: "需要查看文件内容、理解代码逻辑、检查配置时使用。",
+    example: "Read src/api/users.ts (line 40-80)"
+  },
+  {
+    icon: "\uD83D\uDD0D", name: "Glob", badge: "查找",
+    desc: "按文件名模式匹配查找文件。支持 ** 通配符，按修改时间排序，快速定位项目中的文件。",
+    when: "需要找到某类文件（如所有 *.test.ts）、浏览目录结构时使用。",
+    example: "Glob src/**/*.service.ts"
+  },
+  {
+    icon: "\uD83D\uDD0E", name: "Grep", badge: "搜索",
+    desc: "在文件内容中搜索正则表达式。支持按文件类型过滤、显示上下文行数，高效定位代码。",
+    when: "搜索函数定义、变量引用、导入语句、特定错误信息时使用。",
+    example: "Grep \"async function create\" --type ts"
+  },
+  {
+    icon: "\uD83E\uDDED", name: "LSP", badge: "导航",
+    desc: "语言服务器协议工具，提供 Go-to-Definition、Find References、类型信息等 IDE 级别的能力。",
+    when: "查看类型定义、跳转函数实现、查找所有引用、理解类型层次时使用。",
+    example: "LSP: Go to definition of IUserService"
+  },
+  {
+    icon: "\u26A1", name: "Bash", badge: "执行",
+    desc: "运行 Shell 命令：构建、测试、安装依赖、Git 操作、curl 请求等一切命令行任务。",
+    when: "运行测试、执行构建、安装包、Git 操作、查看进程输出时使用。",
+    example: "npm test -- --watch src/utils"
+  },
+  {
+    icon: "\u270F\uFE0F", name: "Edit", badge: "修改",
+    desc: "精确替换文件中的指定文本段。只改需要改的部分，安全可控，是修改现有代码的首选工具。",
+    when: "修改现有代码、修复 Bug、添加功能、调整配置时优先使用（而非 Write）。",
+    example: "Edit: replace old_string \u2192 new_string"
+  }
+];
+
+/* ===== RENDER: RACE ===== */
+var activeRace = -1;
+function renderRace() {
+  var grid = document.getElementById('raceGrid');
+  var cards = '';
+  for (var i = 0; i < RACE_DATA.length; i++) {
+    var c = RACE_DATA[i];
+    cards += '<div class="race-card' + (i === activeRace ? ' active' : '') + '" onclick="toggleRace(' + i + ')">';
+    cards += '<div class="race-letter">' + c.letter + '</div>';
+    cards += '<div class="race-title">' + c.title + '</div>';
+    cards += '<div class="race-sub">' + c.sub + '</div>';
+    cards += '</div>';
+  }
+  grid.innerHTML = cards;
+
+  var detail = document.getElementById('raceDetail');
+  if (activeRace >= 0) {
+    var d = RACE_DATA[activeRace];
+    var html = '<h3>' + d.letter + ' \u2014 ' + d.title + '\uFF08' + d.sub + '\uFF09</h3>';
+    html += '<p>' + d.desc + '</p>';
+    for (var j = 0; j < d.details.length; j++) {
+      html += '<div class="race-detail-section">';
+      html += '<h4>' + d.details[j].heading + '</h4>';
+      html += '<p style="white-space:pre-line">' + escHtml(d.details[j].text) + '</p>';
+      html += '</div>';
+    }
+    html += '<div class="race-detail-section"><h4>\u76F8\u5173\u5DE5\u5177</h4><div class="race-tools">';
+    for (var k = 0; k < d.tools.length; k++) {
+      html += '<span class="race-tool-tag">' + d.tools[k] + '</span>';
+    }
+    html += '</div></div>';
+    html += '<div class="race-example">';
+    html += '<div class="race-example-label">\u793A\u4F8B\u63D0\u793A\u8BCD</div>';
+    html += '<pre>' + escHtml(d.example) + '</pre>';
+    html += '</div>';
+    detail.className = 'race-detail show';
+    detail.innerHTML = html;
+  } else {
+    detail.className = 'race-detail';
+    detail.innerHTML = '';
+  }
+}
+
+function toggleRace(i) {
+  activeRace = activeRace === i ? -1 : i;
+  renderRace();
+}
+
+/* ===== RENDER: CONTEXT ===== */
+function renderContext() {
+  var grid = document.getElementById('ctxGrid');
+  var html = '';
+  for (var i = 0; i < CTX_DATA.length; i++) {
+    var c = CTX_DATA[i];
+    html += '<div class="ctx-card">';
+    html += '<div class="ctx-icon">' + c.icon + '</div>';
+    html += '<h4>' + c.title + '</h4>';
+    html += '<p>' + c.desc + '</p>';
+    html += '<div class="ctx-example">' + escHtml(c.example) + '</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+/* ===== RENDER: COMPARISONS ===== */
+var currentCompare = 0;
+function renderComparisons() {
+  var tabs = document.getElementById('compareTabs');
+  var grid = document.getElementById('compareGrid');
+  var tabsHtml = '';
+  for (var i = 0; i < COMPARISONS.length; i++) {
+    var cls = i === currentCompare ? ' active' : '';
+    tabsHtml += '<button class="compare-tab' + cls + '" onclick="switchCompare(' + i + ')">' + COMPARISONS[i].label + '</button>';
+  }
+  tabs.innerHTML = tabsHtml;
+
+  var c = COMPARISONS[currentCompare];
+  grid.innerHTML =
+    '<div class="compare-card bad" style="animation-delay:.1s">' +
+      '<div class="compare-label">\u274C \u4E0D\u63A8\u8350\u7684\u505A\u6CD5</div>' +
+      '<div class="compare-body">' +
+        '<pre>' + escHtml(c.bad.prompt) + '</pre>' +
+        '<div class="compare-why">\u26A0\uFE0F ' + escHtml(c.bad.reason) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="compare-card good" style="animation-delay:.2s">' +
+      '<div class="compare-label">\u2705 \u63A8\u8350\u7684\u505A\u6CD5</div>' +
+      '<div class="compare-body">' +
+        '<pre>' + escHtml(c.good.prompt) + '</pre>' +
+        '<div class="compare-why">\uD83D\uDCA1 ' + escHtml(c.good.reason) + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function switchCompare(i) {
+  currentCompare = i;
+  renderComparisons();
+}
+
+/* ===== RENDER: TOOLS ===== */
+function renderTools() {
+  var grid = document.getElementById('toolGrid');
+  var html = '';
+  for (var i = 0; i < TOOLS_DATA.length; i++) {
+    var t = TOOLS_DATA[i];
+    html += '<div class="tool-card">';
+    html += '<div class="tool-card-header">';
+    html += '<div class="tool-icon">' + t.icon + '</div>';
+    html += '<div><div class="tool-name">' + t.name + '</div></div>';
+    html += '<span class="tool-badge">' + t.badge + '</span>';
+    html += '</div>';
+    html += '<div class="tool-desc">' + t.desc + '</div>';
+    html += '<div class="tool-when"><strong>\u4F55\u65F6\u4F7F\u7528\uFF1A</strong>' + t.when + '</div>';
+    html += '<div class="tool-example">' + escHtml(t.example) + '</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+/* ===== RENDER: TIPS ===== */
+var currentTipCat = 'planning';
+function renderTips() {
+  var tabs = document.getElementById('tipsTabs');
+  var grid = document.getElementById('tipsGrid');
+  var cats = Object.keys(TIPS_DATA);
+  var tabsHtml = '';
+  for (var i = 0; i < cats.length; i++) {
+    var k = cats[i];
+    var v = TIPS_DATA[k];
+    var cls = k === currentTipCat ? ' active' : '';
+    tabsHtml += '<button class="tips-tab' + cls + '" onclick="switchTips(\'' + k + '\')">' + v.icon + ' ' + v.label + '</button>';
+  }
+  tabs.innerHTML = tabsHtml;
+
+  var catClass = 'cat-' + currentTipCat;
+  var tips = TIPS_DATA[currentTipCat].tips;
+  var cardsHtml = '';
+  for (var j = 0; j < tips.length; j++) {
+    var t = tips[j];
+    cardsHtml += '<div class="tip-card ' + catClass + '">';
+    cardsHtml += '<div class="tip-icon">' + TIPS_DATA[currentTipCat].icon + '</div>';
+    cardsHtml += '<h4>' + escHtml(t.title) + '</h4>';
+    cardsHtml += '<p>' + escHtml(t.desc) + '</p>';
+    cardsHtml += '<div class="tip-example">' + escHtml(t.example) + '</div>';
+    cardsHtml += '</div>';
+  }
+  grid.innerHTML = cardsHtml;
+}
+
+function switchTips(cat) {
+  currentTipCat = cat;
+  renderTips();
+}
+
+/* ===== SCROLL REVEAL ===== */
+function initReveal() {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px' });
+
+  var elements = document.querySelectorAll('.reveal');
+  for (var i = 0; i < elements.length; i++) {
+    observer.observe(elements[i]);
+  }
+
+  // Safety net: force-reveal any remaining hidden elements after 2s
+  setTimeout(function() {
+    var hidden = document.querySelectorAll('.reveal:not(.visible)');
+    for (var j = 0; j < hidden.length; j++) {
+      hidden[j].classList.add('visible');
+    }
+  }, 2000);
+}
+
+/* ===== NAV ACTIVE HIGHLIGHT ===== */
+function initNavHighlight() {
+  var sections = ['race', 'context', 'compare', 'tools', 'tips', 'cheat'];
+  var links = document.querySelectorAll('.nav-links a');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        for (var i = 0; i < links.length; i++) {
+          links[i].classList.remove('active');
+        }
+        var link = document.querySelector('.nav-links a[href="#' + e.target.id + '"]');
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-80px 0px -60% 0px' });
+
+  for (var i = 0; i < sections.length; i++) {
+    var el = document.getElementById(sections[i]);
+    if (el) observer.observe(el);
+  }
+}
+
+/* ===== UTILITY ===== */
+function escHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', function() {
+  renderRace();
+  renderContext();
+  renderComparisons();
+  renderTools();
+  renderTips();
+  initReveal();
+  initNavHighlight();
+});
+</script>
+</body>
+</html>
