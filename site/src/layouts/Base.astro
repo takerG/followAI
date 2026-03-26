@@ -32,6 +32,34 @@ const {
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🤖</text></svg>" />
 
     <style is:global>
+      :root {
+        /* 品牌渐变 */
+        --color-brand-start: #667eea;
+        --color-brand-end: #764ba2;
+
+        /* 表面 */
+        --color-bg-body: #f5f6fc;
+        --color-bg-card: #ffffff;
+        --color-bg-chip: #eeedf5;
+        --color-bg-chip-alt: #f3f2fa;
+
+        /* 文字 */
+        --color-text-primary: #1a1a2e;
+        --color-text-heading: #333;
+        --color-text-body: #555;
+        --color-text-secondary: #666;
+        --color-text-muted: #767676;
+        --color-text-placeholder: #999;
+        --color-text-disabled: #bbb;
+
+        /* 边框 */
+        --color-border: #e0e0ea;
+
+        /* 阴影（品牌色调色） */
+        --shadow-card: 0 1px 3px rgba(102, 126, 234, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-card-hover: 0 8px 25px rgba(102, 126, 234, 0.10), 0 4px 10px rgba(0, 0, 0, 0.04);
+      }
+
       *, *::before, *::after {
         box-sizing: border-box;
         margin: 0;
@@ -45,8 +73,17 @@ const {
 
       body {
         font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        background: #fafafa;
-        color: #1a1a2e;
+        background-color: var(--color-bg-body);
+        background-image:
+          radial-gradient(
+            ellipse 80% 50% at 50% 0%,
+            rgba(102, 126, 234, 0.07) 0%,
+            rgba(118, 75, 162, 0.04) 40%,
+            transparent 70%
+          );
+        background-repeat: no-repeat;
+        background-size: 100% 800px;
+        color: var(--color-text-primary);
         line-height: 1.6;
         min-height: 100vh;
       }

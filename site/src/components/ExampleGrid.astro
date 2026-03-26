@@ -48,7 +48,7 @@ const { examples } = Astro.props;
   }
 
   .empty-content {
-    color: #999;
+    color: var(--color-text-placeholder);
   }
 
   .empty-icon {
@@ -59,17 +59,17 @@ const { examples } = Astro.props;
   .empty-text {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #666;
+    color: var(--color-text-secondary);
   }
 
   .empty-hint {
     margin-top: 8px;
     font-size: 0.875rem;
-    color: #999;
+    color: var(--color-text-placeholder);
   }
 
   .empty-hint code {
-    background: #f0f0f5;
+    background: var(--color-bg-chip);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.875rem;
