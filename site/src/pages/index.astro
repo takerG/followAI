@@ -141,7 +141,7 @@ const { featured, categories, uncategorized } = groupExamples(
 
   .hero-text {
     font-size: 1rem;
-    color: #666;
+    color: var(--color-text-secondary);
     line-height: 1.8;
   }
 
@@ -155,7 +155,7 @@ const { featured, categories, uncategorized } = groupExamples(
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px 0 16px;
-    border-bottom: 1px solid #e5e5ea;
+    border-bottom: 1px solid var(--color-border);
     margin-bottom: 20px;
   }
 
@@ -165,7 +165,7 @@ const { featured, categories, uncategorized } = groupExamples(
     gap: 8px;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #333;
+    color: var(--color-text-heading);
   }
 
   .category-icon {
@@ -179,8 +179,8 @@ const { featured, categories, uncategorized } = groupExamples(
   .category-count {
     font-size: 0.8rem;
     font-weight: 500;
-    color: #999;
-    background: #f0f0f5;
+    color: var(--color-text-placeholder);
+    background: var(--color-bg-chip);
     padding: 2px 8px;
     border-radius: 10px;
   }
@@ -215,8 +215,8 @@ const { featured, categories, uncategorized } = groupExamples(
   }
 
   .footer-cta {
-    background: #fff;
-    border: 1px solid #e5e5ea;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: 16px;
     padding: 40px 32px;
     margin-bottom: 24px;
@@ -225,18 +225,18 @@ const { featured, categories, uncategorized } = groupExamples(
   .cta-heading {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #333;
+    color: var(--color-text-heading);
     margin-bottom: 8px;
   }
 
   .cta-subtext {
     font-size: 0.95rem;
-    color: #767676;
+    color: var(--color-text-muted);
     margin-bottom: 24px;
   }
 
   .cta-subtext strong {
-    color: #667eea;
+    color: var(--color-brand-start);
     font-weight: 700;
   }
 
@@ -269,19 +269,19 @@ const { featured, categories, uncategorized } = groupExamples(
   }
 
   .cta-btn-secondary {
-    background: #f5f5fa;
-    color: #555;
-    border: 1px solid #e5e5ea;
+    background: var(--color-bg-chip-alt);
+    color: var(--color-text-body);
+    border: 1px solid var(--color-border);
   }
 
   .cta-btn-secondary:hover {
-    background: #eeeef5;
+    background: var(--color-bg-chip);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   .cta-btn:focus-visible {
-    outline: 2px solid #667eea;
+    outline: 2px solid var(--color-brand-start);
     outline-offset: 2px;
   }
 
@@ -318,7 +318,7 @@ const { featured, categories, uncategorized } = groupExamples(
 
   .footer-brand {
     font-size: 0.85rem;
-    color: #bbb;
+    color: var(--color-text-disabled);
     letter-spacing: 0.02em;
   }
 </style>
