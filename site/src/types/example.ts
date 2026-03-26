@@ -49,3 +49,14 @@ export interface ResolvedExample extends ExampleMeta {
   slug: string;
   hasIndex: boolean;
 }
+
+export interface CategoryConfig {
+  title: string;
+  icon: string;
+  items: string[];
+}
+
+export interface OrderConfig {
+  featured?: string[];
+  categories?: CategoryConfig[];
+}

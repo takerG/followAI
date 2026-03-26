@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)" rx="12"/>
+  <circle cx="120" cy="80" r="60" fill="#fff" opacity=".08"/>
+  <circle cx="700" cy="370" r="90" fill="#fff" opacity=".08"/>
+  <circle cx="650" cy="100" r="40" fill="#fff" opacity=".06"/>
+  <circle cx="200" cy="380" r="50" fill="#fff" opacity=".06"/>
+  <text x="400" y="180" text-anchor="middle" font-family="system-ui,sans-serif" font-size="56" fill="#fff" font-weight="700">🤖</text>
+  <text x="400" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="40" fill="#fff" font-weight="700">AI Agent 构建模式</text>
+  <text x="400" y="310" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" fill="#fff" opacity=".9">自主规划与执行的 AI 系统设计</text>
+</svg>

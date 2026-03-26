@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP 开发实战 — 让 AI 调用外部工具的标准协议</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0f172a;
+  --bg-secondary:#1e293b;
+  --bg-tertiary:#253349;
+  --bg-card:#1e293b;
+  --bg-hover:#334155;
+  --border:#334155;
+  --border-active:#059669;
+  --text-primary:#e2e8f0;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --accent:#059669;
+  --accent-light:#0d9488;
+  --accent-glow:rgba(5,150,105,.15);
+  --green:#059669;
+  --green-dim:rgba(5,150,105,.12);
+  --teal:#0d9488;
+  --teal-dim:rgba(13,148,136,.12);
+  --cyan:#06b6d4;
+  --red:#ef4444;
+  --red-dim:rgba(239,68,68,.12);
+  --amber:#f59e0b;
+  --purple:#a78bfa;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+  --transition:0.3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ===== Scrollbar + Grid ===== */
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(5,150,105,.08),transparent),
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:100% 100%,60px 60px,60px 60px;
+  opacity:.25;
+}
+
+/* ===== Container ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+/* ===== Scroll Reveal ===== */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+/* ===== Animations ===== */
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ===== Hero ===== */
+.hero{padding:100px 0 60px;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(5,150,105,.12) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;background:var(--accent-glow);border:1px solid rgba(5,150,105,.25);color:var(--accent);font-size:.85rem;font-weight:500;margin-bottom:24px;animation:fadeInDown .6s ease-out}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.hero h1{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#059669 0%,#0d9488 50%,#06b6d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fadeInDown .6s ease-out .1s both;line-height:1.2;margin-bottom:20px}
+.hero p{font-size:clamp(1rem,2vw,1.15rem);color:var(--text-secondary);max-width:640px;margin:0 auto 40px;animation:fadeInDown .6s ease-out .2s both}
+.hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;animation:fadeInDown .6s ease-out .3s both}
+.hero-stat{text-align:center;padding:12px 20px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.hero-stat .num{display:block;font-size:1.1rem;font-weight:700;color:var(--accent)}
+.hero-stat .label{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+
+/* ===== Section ===== */
+.section{padding:60px 0}
+.section-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:12px;color:var(--text-primary);text-align:center}
+.section-subtitle{font-size:1rem;color:var(--text-secondary);margin-bottom:40px;max-width:640px;text-align:center;margin-left:auto;margin-right:auto}
+/* ===== Concept Diagram ===== */
+.diagram{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:24px 0}
+.diagram-node{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:20px 28px;text-align:center;min-width:120px;transition:var(--transition)}
+.diagram-node:hover{border-color:var(--accent);transform:translateY(-2px)}
+.diagram-node .node-icon{font-size:1.8rem;margin-bottom:8px}
+.diagram-node .node-label{font-size:.9rem;font-weight:600}
+.diagram-arrow{font-size:1.5rem;color:var(--accent);flex-shrink:0}
+@media(max-width:600px){.diagram{flex-direction:column}.diagram-arrow{transform:rotate(90deg)}}
+
+/* ===== Core Cards Grid ===== */
+.core-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:32px}
+.core-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:var(--transition)}
+.core-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.core-card .core-icon{font-size:1.4rem;margin-bottom:8px}
+.core-card h4{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.core-card p{font-size:.85rem;color:var(--text-secondary);line-height:1.6}
+/* ===== Capability Cards ===== */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.cap-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:var(--transition);position:relative;overflow:hidden}
+.cap-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.cap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--teal))}
+.cap-card .cap-icon{font-size:2rem;margin-bottom:12px}
+.cap-card h4{font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.cap-card p{font-size:.88rem;color:var(--text-secondary);line-height:1.6}
+
+/* ===== Tab Component ===== */
+.tab-nav{display:flex;gap:4px;background:var(--bg-secondary);border-radius:var(--radius);padding:4px;margin-bottom:24px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:12px 20px;border:none;background:transparent;color:var(--text-secondary);font-size:.9rem;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);white-space:nowrap;font-family:inherit}
+.tab-btn:hover{color:var(--text-primary);background:var(--bg-tertiary)}
+.tab-btn[aria-selected="true"]{background:var(--accent);color:#fff}
+.tab-panel{display:none}.tab-panel.active{display:block}
+/* ===== Comparison Flow ===== */
+.compare-flow{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.compare-flow h4{font-size:1rem;font-weight:700;margin-bottom:16px;color:var(--text-primary)}
+.flow-steps{display:flex;flex-direction:column;gap:12px}
+.flow-item{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-tertiary);border-radius:var(--radius-sm);font-size:.9rem}
+.flow-item .flow-num{width:28px;height:28px;border-radius:50%;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+.flow-item.manual .flow-num{background:var(--red-dim);color:var(--red)}
+
+/* ===== TOOLS Framework ===== */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:40px}
+.tool-letter{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:var(--transition)}
+.tool-letter:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tool-letter .letter{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));color:#fff;font-size:1.4rem;font-weight:800;margin-bottom:10px}
+.tool-letter h4{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.tool-letter p{font-size:.82rem;color:var(--text-secondary);line-height:1.5}
+
+/* ===== Walkthrough ===== */
+.walk-container{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.walk-header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:linear-gradient(135deg,#1e293b,#334155);color:#fff;font-size:.88rem}
+.walk-header .dot{width:12px;height:12px;border-radius:50%}
+.walk-steps{display:flex;gap:4px;padding:14px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.walk-step-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);font-size:.82rem;cursor:pointer;font-weight:500;transition:all .2s;color:var(--text-secondary);font-family:inherit}
+.walk-step-btn:hover{border-color:var(--accent)}
+.walk-step-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.walk-body{padding:28px 24px;min-height:300px}
+.walk-body h4{font-size:1.1rem;margin-bottom:10px}
+.walk-body p{color:var(--text-secondary);margin-bottom:16px;line-height:1.8}
+.walk-body code{font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:.85rem;background:var(--accent-glow);color:var(--accent);padding:2px 6px;border-radius:4px}
+.walk-code{background:var(--bg-primary);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;padding:20px;font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:.85rem;line-height:1.8;overflow-x:auto;margin-bottom:16px;white-space:pre;tab-size:2;position:relative}
+.walk-code .kw{color:#c084fc}.walk-code .fn{color:#60a5fa}
+.walk-code .str{color:#86efac}.walk-code .cm{color:#64748b}
+.walk-code .num{color:#fbbf24}.walk-code .type{color:#67e8f9}
+.walk-nav{display:flex;justify-content:space-between;padding:14px 24px;border-top:1px solid var(--border)}
+.walk-nav button{padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);cursor:pointer;font-weight:600;font-size:.88rem;color:var(--text-primary);transition:all .2s;font-family:inherit}
+.walk-nav button:hover:not(:disabled){background:var(--accent);color:#fff;border-color:var(--accent)}
+.walk-nav button:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== Copy Button ===== */
+.copy-btn{position:absolute;top:8px;right:8px;padding:4px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-muted);font-size:.75rem;cursor:pointer;transition:var(--transition);font-family:inherit}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+/* ===== Tool Implementation Cards ===== */
+.impl-grid{display:flex;flex-direction:column;gap:24px}
+.impl-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.impl-card-header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border)}
+.impl-card-header .impl-icon{font-size:1.3rem}
+.impl-card-header h4{font-size:1rem;font-weight:700}
+.impl-card-header .impl-name{font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:.82rem;color:var(--accent);background:var(--accent-glow);padding:2px 10px;border-radius:4px;margin-left:auto}
+.impl-card-body{padding:0}
+.impl-card-body .walk-code{border-radius:0;border:none;margin:0}
+
+/* ===== Do/Don't ===== */
+.dodont-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.dodont-grid{grid-template-columns:1fr}}
+.dodont-card{background:var(--bg-secondary);border-radius:var(--radius);padding:28px;border:1px solid var(--border)}
+.dodont-card h3{font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.dodont-card.do-card h3{color:var(--green)}.dodont-card.dont-card h3{color:var(--red)}
+.dodont-card ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.dodont-card li{display:flex;align-items:flex-start;gap:10px;font-size:.92rem;color:var(--text-secondary);line-height:1.6}
+.dodont-card li::before{flex-shrink:0;font-size:1rem;margin-top:2px}
+.do-card li::before{content:'\2705'}.dont-card li::before{content:'\274C'}
+/* ===== Definition Box ===== */
+.def-box{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:32px;border-left:4px solid var(--accent)}
+.def-box p{font-size:1.05rem;color:var(--text-primary);line-height:1.7}
+.def-box p strong{color:var(--accent)}
+
+/* ===== Footer ===== */
+.footer{text-align:center;padding:48px 24px;color:var(--text-muted);font-size:.85rem;border-top:1px solid var(--border);margin-top:40px}
+.footer a{color:var(--accent);text-decoration:none}.footer a:hover{text-decoration:underline}
+/* ===== Responsive ===== */
+@media(max-width:1024px){
+  .tools-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:768px){
+  .hero{padding:72px 0 48px}
+  .section{padding:48px 0}
+  .tools-grid{grid-template-columns:repeat(2,1fr)}
+  .cap-grid{grid-template-columns:1fr 1fr}
+  .walk-steps{gap:4px}
+  .walk-body{padding:20px 16px}
+}
+@media(max-width:600px){
+  .tools-grid{grid-template-columns:1fr 1fr}
+  .cap-grid{grid-template-columns:1fr}
+  .hero-stats{gap:12px}
+  .hero-stat{padding:10px 14px}
+  .tab-btn{padding:10px 14px;font-size:.82rem}
+}
+@media(max-width:480px){
+  .container{padding:0 16px}
+  .hero{padding:60px 0 36px}
+  .section{padding:36px 0}
+  .tools-grid{grid-template-columns:1fr}
+  .core-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="dot"></span> AI 编程最佳实践</div>
+    <h1>MCP 开发实战</h1>
+    <p>Model Context Protocol — 让 AI 能调用外部工具的标准协议，从零构建你的第一个 MCP Server</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="num">5 个</span><span class="label">核心概念</span></div>
+      <div class="hero-stat"><span class="num">3 个</span><span class="label">实战工具</span></div>
+      <div class="hero-stat"><span class="num">1 个</span><span class="label">完整 Server</span></div>
+      <div class="hero-stat"><span class="num">TOOLS</span><span class="label">框架</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== Section 1: What is MCP? ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">🔌 什么是 MCP？</h2>
+      <div class="def-box reveal">
+        <p><strong>MCP (Model Context Protocol)</strong> 是一个开放标准协议，让 AI 模型能够安全地连接和调用外部工具、数据源和服务。它定义了 AI 与工具之间的通信方式，就像 USB 协议让各种设备能接入电脑一样。</p>
+      </div>
+
+      <div class="diagram reveal">
+        <div class="diagram-node">
+          <div class="node-icon">🤖</div>
+          <div class="node-label">AI Model</div>
+        </div>
+        <span class="diagram-arrow">⟷</span>
+        <div class="diagram-node" style="border-color:var(--accent)">
+          <div class="node-icon">🔌</div>
+          <div class="node-label">MCP Protocol</div>
+        </div>
+        <span class="diagram-arrow">⟷</span>
+        <div class="diagram-node">
+          <div class="node-icon">🛠️</div>
+          <div class="node-label">Tools</div>
+        </div>
+      </div>
+
+      <div class="core-grid reveal">
+        <div class="core-card">
+          <div class="core-icon">📁</div>
+          <h4>Files</h4>
+          <p>文件读写、搜索、管理</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">🗄️</div>
+          <h4>Database</h4>
+          <p>数据库查询与分析</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">🌐</div>
+          <h4>API</h4>
+          <p>外部服务调用</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">🖥️</div>
+          <h4>Browser</h4>
+          <p>浏览器自动化操作</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:1.1rem;font-weight:700;margin:36px 0 16px;text-align:center" class="reveal">核心组件</h3>
+      <div class="core-grid reveal">
+        <div class="core-card">
+          <div class="core-icon">🔗</div>
+          <h4>Transport Layer</h4>
+          <p>传输层，负责客户端和服务端之间的通信连接</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">📝</div>
+          <h4>Tool Definition</h4>
+          <p>工具定义，描述工具名称、参数和功能说明</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">⚙️</div>
+          <h4>Handler</h4>
+          <p>处理器，接收请求并执行实际操作逻辑</p>
+        </div>
+        <div class="core-card">
+          <div class="core-icon">🔄</div>
+          <h4>Lifecycle</h4>
+          <p>生命周期管理，处理初始化、连接和断开</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Section 2: What can MCP do? ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">🚀 MCP 能做什么？</h2>
+      <p class="section-subtitle reveal">通过标准化协议，让 AI 从"只能聊天"变成"能做事情"。</p>
+
+      <div class="cap-grid reveal">
+        <div class="cap-card">
+          <div class="cap-icon">📁</div>
+          <h4>文件操作</h4>
+          <p>读写文件、搜索代码、管理项目结构，让 AI 直接操作你的代码仓库</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🗄️</div>
+          <h4>数据库查询</h4>
+          <p>直接查询数据库、分析数据、生成报表，无需手动复制粘贴数据</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🌐</div>
+          <h4>API 调用</h4>
+          <p>调用外部服务、获取实时数据、自动化流程，打通各种第三方系统</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">🖥️</div>
+          <h4>浏览器操作</h4>
+          <p>自动化测试、截图、网页数据采集，让 AI 像人一样浏览网页</p>
+        </div>
+      </div>
+
+      <!-- Before/After Tabs -->
+      <div style="margin-top:40px" class="reveal">
+        <div class="tab-nav" role="tablist" aria-label="MCP 对比">
+          <button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-before" id="tab-before">无 MCP</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-after" id="tab-after">有 MCP</button>
+        </div>
+        <div id="panel-before" class="tab-panel active" role="tabpanel" aria-labelledby="tab-before">
+          <div class="compare-flow">
+            <h4>😩 传统方式：手动复制粘贴</h4>
+            <div class="flow-steps">
+              <div class="flow-item manual"><span class="flow-num">1</span> 向 AI 描述你需要查询的数据</div>
+              <div class="flow-item manual"><span class="flow-num">2</span> AI 给出 SQL 语句，你手动复制到数据库客户端</div>
+              <div class="flow-item manual"><span class="flow-num">3</span> 执行查询，复制结果粘贴回 AI 对话</div>
+              <div class="flow-item manual"><span class="flow-num">4</span> AI 分析结果，给出下一步建议</div>
+              <div class="flow-item manual"><span class="flow-num">5</span> 重复以上步骤... 效率低，容易出错</div>
+            </div>
+          </div>
+        </div>
+        <div id="panel-after" class="tab-panel" role="tabpanel" aria-labelledby="tab-after">
+          <div class="compare-flow" style="border-color:var(--accent)">
+            <h4>🚀 MCP 方式：AI 直接调用</h4>
+            <div class="flow-steps">
+              <div class="flow-item"><span class="flow-num">1</span> 向 AI 描述你需要查询的数据</div>
+              <div class="flow-item"><span class="flow-num">2</span> AI 自动通过 MCP 调用数据库工具查询</div>
+              <div class="flow-item"><span class="flow-num">3</span> 结果直接返回 AI，自动分析并给出结论</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== Section 3: TOOLS Framework ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">🛠️ TOOLS 框架：5 步构建 MCP Server</h2>
+      <p class="section-subtitle reveal">记住 TOOLS 这五个字母，掌握构建 MCP Server 的完整流程。</p>
+
+      <div class="tools-grid reveal">
+        <div class="tool-letter">
+          <div class="letter">T</div>
+          <h4>Transport</h4>
+          <p>选择传输方式<br>stdio / HTTP SSE</p>
+        </div>
+        <div class="tool-letter">
+          <div class="letter">O</div>
+          <h4>Operations</h4>
+          <p>定义工具操作<br>name, description, schema</p>
+        </div>
+        <div class="tool-letter">
+          <div class="letter">O</div>
+          <h4>Output</h4>
+          <p>设计输出格式<br>结构化返回</p>
+        </div>
+        <div class="tool-letter">
+          <div class="letter">L</div>
+          <h4>Lifecycle</h4>
+          <p>管理生命周期<br>初始化·连接·断开</p>
+        </div>
+        <div class="tool-letter">
+          <div class="letter">S</div>
+          <h4>Security</h4>
+          <p>安全控制<br>权限·验证·错误处理</p>
+        </div>
+      </div>
+
+      <!-- Walkthrough -->
+      <div class="walk-container reveal">
+        <div class="walk-header">
+          <span class="dot" style="background:#ef4444"></span>
+          <span class="dot" style="background:#f59e0b"></span>
+          <span class="dot" style="background:#22c55e"></span>
+          <span>mcp-server.ts</span>
+        </div>
+        <div class="walk-steps" id="walkSteps">
+          <button class="walk-step-btn active" data-step="0">1. 初始化项目</button>
+          <button class="walk-step-btn" data-step="1">2. 定义工具</button>
+          <button class="walk-step-btn" data-step="2">3. 实现 Handler</button>
+          <button class="walk-step-btn" data-step="3">4. 连接测试</button>
+        </div>
+        <div class="walk-body" id="walkBody"></div>
+        <div class="walk-nav">
+          <button id="prevBtn" disabled>&larr; 上一步</button>
+          <button id="nextBtn">下一步 &rarr;</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== Section 4: Complete Example ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">💡 完整实战：文件管理 MCP Server</h2>
+      <p class="section-subtitle reveal">一个提供 3 个文件操作工具的完整 MCP Server 示例。</p>
+
+      <div class="impl-grid">
+
+        <div class="impl-card reveal">
+          <div class="impl-card-header">
+            <span class="impl-icon">📖</span>
+            <h4>读取文件内容</h4>
+            <span class="impl-name">read_file</span>
+          </div>
+          <div class="impl-card-body">
+            <div class="walk-code" id="code-read-file"><span class="cm">// Tool: read_file — 读取指定路径的文件内容</span>
+{
+  <span class="str">"name"</span>: <span class="str">"read_file"</span>,
+  <span class="str">"description"</span>: <span class="str">"读取指定路径的文件内容，返回文本"</span>,
+  <span class="str">"inputSchema"</span>: {
+    <span class="str">"type"</span>: <span class="str">"object"</span>,
+    <span class="str">"properties"</span>: {
+      <span class="str">"path"</span>: {
+        <span class="str">"type"</span>: <span class="str">"string"</span>,
+        <span class="str">"description"</span>: <span class="str">"文件的绝对路径或相对路径"</span>
+      }
+    },
+    <span class="str">"required"</span>: [<span class="str">"path"</span>]
+  }
+}
+
+<span class="cm">// Handler 实现</span>
+<span class="kw">async function</span> <span class="fn">handleReadFile</span>(args: { path: <span class="kw">string</span> }) {
+  <span class="kw">const</span> content = <span class="kw">await</span> fs.<span class="fn">readFile</span>(args.path, <span class="str">'utf-8'</span>);
+  <span class="kw">return</span> {
+    content: [{ <span class="kw">type</span>: <span class="str">'text'</span>, text: content }]
+  };
+}<button class="copy-btn" data-code="code-read-file">复制</button></div>
+          </div>
+        </div>
+
+        <div class="impl-card reveal">
+          <div class="impl-card-header">
+            <span class="impl-icon">🔍</span>
+            <h4>搜索文件</h4>
+            <span class="impl-name">search_files</span>
+          </div>
+          <div class="impl-card-body">
+            <div class="walk-code" id="code-search-files"><span class="cm">// Tool: search_files — 按关键词搜索文件内容</span>
+{
+  <span class="str">"name"</span>: <span class="str">"search_files"</span>,
+  <span class="str">"description"</span>: <span class="str">"在目录中搜索包含关键词的文件"</span>,
+  <span class="str">"inputSchema"</span>: {
+    <span class="str">"type"</span>: <span class="str">"object"</span>,
+    <span class="str">"properties"</span>: {
+      <span class="str">"directory"</span>: { <span class="str">"type"</span>: <span class="str">"string"</span> },
+      <span class="str">"pattern"</span>: { <span class="str">"type"</span>: <span class="str">"string"</span> }
+    },
+    <span class="str">"required"</span>: [<span class="str">"directory"</span>, <span class="str">"pattern"</span>]
+  }
+}
+
+<span class="cm">// Handler 实现</span>
+<span class="kw">async function</span> <span class="fn">handleSearchFiles</span>(args: {
+  directory: <span class="kw">string</span>;
+  pattern: <span class="kw">string</span>;
+}) {
+  <span class="kw">const</span> results = <span class="kw">await</span> <span class="fn">glob</span>(<span class="str">`${args.directory}/**/*`</span>);
+  <span class="kw">const</span> matches = [];
+  <span class="kw">for</span> (<span class="kw">const</span> file <span class="kw">of</span> results) {
+    <span class="kw">const</span> content = <span class="kw">await</span> fs.<span class="fn">readFile</span>(file, <span class="str">'utf-8'</span>);
+    <span class="kw">if</span> (content.<span class="fn">includes</span>(args.pattern)) {
+      matches.<span class="fn">push</span>(file);
+    }
+  }
+  <span class="kw">return</span> {
+    content: [{ <span class="kw">type</span>: <span class="str">'text'</span>, text: matches.<span class="fn">join</span>(<span class="str">'\n'</span>) }]
+  };
+}<button class="copy-btn" data-code="code-search-files">复制</button></div>
+          </div>
+        </div>
+
+        <div class="impl-card reveal">
+          <div class="impl-card-header">
+            <span class="impl-icon">📂</span>
+            <h4>列出目录内容</h4>
+            <span class="impl-name">list_directory</span>
+          </div>
+          <div class="impl-card-body">
+            <div class="walk-code" id="code-list-dir"><span class="cm">// Tool: list_directory — 列出指定目录的文件和文件夹</span>
+{
+  <span class="str">"name"</span>: <span class="str">"list_directory"</span>,
+  <span class="str">"description"</span>: <span class="str">"列出目录中的所有文件和子目录"</span>,
+  <span class="str">"inputSchema"</span>: {
+    <span class="str">"type"</span>: <span class="str">"object"</span>,
+    <span class="str">"properties"</span>: {
+      <span class="str">"path"</span>: { <span class="str">"type"</span>: <span class="str">"string"</span> }
+    },
+    <span class="str">"required"</span>: [<span class="str">"path"</span>]
+  }
+}
+
+<span class="cm">// Handler 实现</span>
+<span class="kw">async function</span> <span class="fn">handleListDirectory</span>(args: { path: <span class="kw">string</span> }) {
+  <span class="kw">const</span> entries = <span class="kw">await</span> fs.<span class="fn">readdir</span>(args.path, {
+    withFileTypes: <span class="num">true</span>
+  });
+  <span class="kw">const</span> listing = entries.<span class="fn">map</span>(e =>
+    <span class="str">`${e.<span class="fn">isDirectory</span>() ? '📁' : '📄'} ${e.name}`</span>
+  );
+  <span class="kw">return</span> {
+    content: [{ <span class="kw">type</span>: <span class="str">'text'</span>, text: listing.<span class="fn">join</span>(<span class="str">'\n'</span>) }]
+  };
+}<button class="copy-btn" data-code="code-list-dir">复制</button></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Section 5: Cheat Sheet ===== -->
+  <div class="section">
+    <div class="container">
+      <h2 class="section-title reveal">📋 MCP 开发速查表</h2>
+      <p class="section-subtitle reveal">遵循这些原则，构建安全可靠的 MCP Server。</p>
+
+      <div class="dodont-grid">
+        <div class="dodont-card do-card reveal">
+          <h3>✅ 推荐做法</h3>
+          <ul>
+            <li>为每个工具编写清晰的 description</li>
+            <li>使用 JSON Schema 验证输入参数</li>
+            <li>实现优雅的错误处理和错误消息</li>
+            <li>添加超时和重试机制</li>
+            <li>使用 TypeScript 增强类型安全</li>
+          </ul>
+        </div>
+        <div class="dodont-card dont-card reveal">
+          <h3>❌ 避免做法</h3>
+          <ul>
+            <li>在工具中执行危险的系统操作</li>
+            <li>忽略输入验证直接处理参数</li>
+            <li>返回未经处理的原始错误信息</li>
+            <li>让单个工具承担过多职责</li>
+            <li>跳过安全性审查直接上线</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>MCP 开发实战 · 让 AI 调用外部工具</p>
+    <p style="margin-top:8px;font-size:.78rem">由 <a href="#">followAI</a> 出品 · 2025</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ===== Walkthrough Data ===== */
+  var walkSteps = [
+    {
+      title: '步骤 1：初始化项目',
+      desc: '创建一个新的 Node.js 项目，安装 <code>@modelcontextprotocol/sdk</code> 依赖。',
+      code: '<span class="cm">// package.json</span>\n{\n  <span class="str">"name"</span>: <span class="str">"my-mcp-server"</span>,\n  <span class="str">"version"</span>: <span class="str">"1.0.0"</span>,\n  <span class="str">"type"</span>: <span class="str">"module"</span>,\n  <span class="str">"scripts"</span>: {\n    <span class="str">"build"</span>: <span class="str">"tsc"</span>,\n    <span class="str">"start"</span>: <span class="str">"node dist/index.js"</span>\n  },\n  <span class="str">"dependencies"</span>: {\n    <span class="str">"@modelcontextprotocol/sdk"</span>: <span class="str">"^1.0.0"</span>\n  },\n  <span class="str">"devDependencies"</span>: {\n    <span class="str">"typescript"</span>: <span class="str">"^5.0.0"</span>,\n    <span class="str">"@types/node"</span>: <span class="str">"^20.0.0"</span>\n  }\n}\n\n<span class="cm">// tsconfig.json</span>\n{\n  <span class="str">"compilerOptions"</span>: {\n    <span class="str">"target"</span>: <span class="str">"ES2022"</span>,\n    <span class="str">"module"</span>: <span class="str">"Node16"</span>,\n    <span class="str">"outDir"</span>: <span class="str">"./dist"</span>,\n    <span class="str">"strict"</span>: <span class="num">true</span>\n  }\n}'
+    },
+    {
+      title: '步骤 2：定义工具',
+      desc: '使用 JSON Schema 描述工具的名称、功能和输入参数。清晰的描述能帮助 AI 正确调用工具。',
+      code: '<span class="kw">import</span> { McpServer } <span class="kw">from</span> <span class="str">"@modelcontextprotocol/sdk/server/mcp.js"</span>;\n\n<span class="kw">const</span> server = <span class="kw">new</span> <span class="fn">McpServer</span>({\n  name: <span class="str">"file-manager"</span>,\n  version: <span class="str">"1.0.0"</span>,\n});\n\n<span class="cm">// 定义工具：使用 zod 做参数验证</span>\n<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">"zod"</span>;\n\nserver.<span class="fn">tool</span>(\n  <span class="str">"read_file"</span>,\n  <span class="str">"读取指定路径的文件内容"</span>,\n  {\n    path: z.<span class="fn">string</span>().<span class="fn">describe</span>(<span class="str">"文件路径"</span>),\n  },\n  <span class="cm">// handler 在下一步实现</span>\n);'
+    },
+    {
+      title: '步骤 3：实现 Handler',
+      desc: '为每个工具编写处理函数。Handler 接收验证后的参数，执行操作并返回结构化结果。',
+      code: '<span class="kw">import</span> { readFile } <span class="kw">from</span> <span class="str">"node:fs/promises"</span>;\n\nserver.<span class="fn">tool</span>(\n  <span class="str">"read_file"</span>,\n  <span class="str">"读取指定路径的文件内容"</span>,\n  { path: z.<span class="fn">string</span>().<span class="fn">describe</span>(<span class="str">"文件路径"</span>) },\n  <span class="kw">async</span> ({ path }) => {\n    <span class="kw">try</span> {\n      <span class="kw">const</span> content = <span class="kw">await</span> <span class="fn">readFile</span>(path, <span class="str">"utf-8"</span>);\n      <span class="kw">return</span> {\n        content: [\n          { type: <span class="str">"text"</span>, text: content }\n        ],\n      };\n    } <span class="kw">catch</span> (error) {\n      <span class="kw">return</span> {\n        content: [\n          { type: <span class="str">"text"</span>,\n            text: <span class="str">`读取文件失败: ${error.message}`</span> }\n        ],\n        isError: <span class="num">true</span>,\n      };\n    }\n  }\n);'
+    },
+    {
+      title: '步骤 4：连接测试',
+      desc: '启动 MCP Server 并通过 stdio 传输连接。在 Claude Desktop 或其他 MCP 客户端中配置即可使用。',
+      code: '<span class="kw">import</span> { StdioServerTransport } <span class="kw">from</span>\n  <span class="str">"@modelcontextprotocol/sdk/server/stdio.js"</span>;\n\n<span class="cm">// 创建 stdio 传输层并连接</span>\n<span class="kw">const</span> transport = <span class="kw">new</span> <span class="fn">StdioServerTransport</span>();\n<span class="kw">await</span> server.<span class="fn">connect</span>(transport);\n\nconsole.<span class="fn">error</span>(<span class="str">"MCP Server 已启动 ✅"</span>);\n\n<span class="cm">// ── Claude Desktop 配置 ──</span>\n<span class="cm">// claude_desktop_config.json</span>\n{\n  <span class="str">"mcpServers"</span>: {\n    <span class="str">"file-manager"</span>: {\n      <span class="str">"command"</span>: <span class="str">"node"</span>,\n      <span class="str">"args"</span>: [<span class="str">"dist/index.js"</span>]\n    }\n  }\n}\n\n<span class="cm">// 🎉 现在 AI 可以调用你的工具了！</span>'
+    }
+  ];
+
+  /* ===== Walkthrough Logic ===== */
+  var currentStep = 0;
+  var walkBody = document.getElementById('walkBody');
+  var stepBtns = document.querySelectorAll('.walk-step-btn');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+
+  function goStep(n) {
+    if (n < 0 || n >= walkSteps.length) return;
+    currentStep = n;
+    var s = walkSteps[n];
+    walkBody.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p><div class="walk-code">' + s.code + '</div>';
+    stepBtns.forEach(function(b, i) { b.classList.toggle('active', i === n); });
+    prevBtn.disabled = n === 0;
+    nextBtn.disabled = n === walkSteps.length - 1;
+  }
+
+  stepBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      goStep(parseInt(btn.dataset.step, 10));
+    });
+  });
+  prevBtn.addEventListener('click', function() { goStep(currentStep - 1); });
+  nextBtn.addEventListener('click', function() { goStep(currentStep + 1); });
+
+  /* keyboard nav for walkthrough */
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight') goStep(currentStep + 1);
+    if (e.key === 'ArrowLeft') goStep(currentStep - 1);
+  });
+
+  goStep(0);
+
+  /* ===== Tab Switching ===== */
+  var tabNavs = document.querySelectorAll('.tab-nav');
+  tabNavs.forEach(function(nav) {
+    var btns = nav.querySelectorAll('.tab-btn');
+    btns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var panelId = btn.getAttribute('aria-controls');
+        /* deactivate siblings */
+        btns.forEach(function(b) {
+          b.setAttribute('aria-selected', 'false');
+          var p = document.getElementById(b.getAttribute('aria-controls'));
+          if (p) p.classList.remove('active');
+        });
+        /* activate current */
+        btn.setAttribute('aria-selected', 'true');
+        var panel = document.getElementById(panelId);
+        if (panel) panel.classList.add('active');
+        /* trigger reveal check */
+        requestAnimationFrame(checkReveal);
+      });
+    });
+
+    /* Keyboard navigation for tabs */
+    nav.addEventListener('keydown', function(e) {
+      var tabs = Array.from(btns);
+      var idx = tabs.indexOf(document.activeElement);
+      if (idx === -1) return;
+      var next = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        next = (idx + 1) % tabs.length;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        next = (idx - 1 + tabs.length) % tabs.length;
+      }
+      if (next !== -1) {
+        e.preventDefault();
+        tabs[next].focus();
+        tabs[next].click();
+      }
+    });
+  });
+
+  /* ===== Copy Buttons ===== */
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var codeId = btn.dataset.code;
+      var codeEl = document.getElementById(codeId);
+      if (!codeEl) return;
+      var text = codeEl.textContent || codeEl.innerText;
+      /* remove trailing "复制" label */
+      text = text.replace(/复制$/, '').trim();
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          showCopied(btn);
+        }).catch(function() {
+          fallbackCopy(text, btn);
+        });
+      } else {
+        fallbackCopy(text, btn);
+      }
+    });
+  });
+
+  function fallbackCopy(text, btn) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;left:-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showCopied(btn); }
+    catch(e) { /* silent */ }
+    document.body.removeChild(ta);
+  }
+
+  function showCopied(btn) {
+    var orig = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = orig;
+      btn.classList.remove('copied');
+    }, 1800);
+  }
+
+  /* ===== Scroll Reveal (IntersectionObserver) ===== */
+  function checkReveal() {
+    document.querySelectorAll('.reveal:not(.visible)').forEach(function(el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 20) {
+        el.classList.add('visible');
+      }
+    });
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) {
+      observer.observe(el);
+    });
+  } else {
+    window.addEventListener('scroll', checkReveal, { passive: true });
+    window.addEventListener('resize', checkReveal, { passive: true });
+    checkReveal();
+  }
+
+  /* Safety net: force-reveal after 2s */
+  setTimeout(function() {
+    document.querySelectorAll('.reveal:not(.visible)').forEach(function(el) {
+      el.classList.add('visible');
+    });
+  }, 2000);
+
+  /* ===== Hover glow on cards ===== */
+  document.querySelectorAll('.cap-card, .core-card, .tool-letter, .dodont-card, .impl-card').forEach(function(card) {
+    card.addEventListener('mousemove', function(e) {
+      var rect = card.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+      card.style.background = 'radial-gradient(300px circle at ' + x + 'px ' + y + 'px, rgba(5,150,105,.06), transparent 60%), var(--bg-secondary)';
+    });
+    card.addEventListener('mouseleave', function() {
+      card.style.background = '';
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

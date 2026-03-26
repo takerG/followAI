@@ -1,0 +1,771 @@
+<!DOCTYPE html><html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 辅助架构设计 — followAI</title>
+<meta name="description" content="用 AI 做技术方案设计 — 系统架构、API 设计、数据库建模全流程">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0a1628;--bg-secondary:#132035;--bg-tertiary:#1a2d4a;
+  --bg-card:#132035;--border:#1e3a5f;--border-active:#0284c7;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent:#0284c7;--accent-secondary:#0ea5e9;--accent-glow:rgba(2,132,199,.15);
+  --mono:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  --radius:10px;--container:820px;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+  background:var(--bg-primary);color:var(--text-primary);line-height:1.7;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* bg grid */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(2,132,199,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(2,132,199,.06) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridShift 90s linear infinite;
+}
+@keyframes gridShift{to{background-position:60px 60px}}
+
+.container{max-width:var(--container);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+a{color:var(--accent-secondary);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+
+/* ===== HERO ===== */
+.hero{padding:80px 0 60px;text-align:center;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--bg-tertiary);border:1px solid var(--border);
+  padding:6px 16px;border-radius:999px;font-size:.82rem;color:var(--text-secondary);
+  margin-bottom:24px;
+}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-secondary);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{
+  font-size:clamp(2rem,5.5vw,3.4rem);font-weight:800;line-height:1.15;
+  background:linear-gradient(135deg,#0284c7,#0ea5e9,#e0f2fe);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:16px;
+}
+.hero .subtitle{font-size:clamp(.95rem,2.2vw,1.18rem);color:var(--text-secondary);max-width:600px;margin:0 auto 32px}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.stats span{
+  background:var(--bg-tertiary);border:1px solid var(--border);
+  padding:6px 14px;border-radius:8px;font-size:.8rem;color:var(--text-secondary);white-space:nowrap;
+}
+
+/* sections */
+section{padding:56px 0}
+.section-title{
+  font-size:clamp(1.35rem,3.5vw,1.85rem);font-weight:700;margin-bottom:8px;line-height:1.3;
+}
+.section-lead{color:var(--text-secondary);margin-bottom:32px;font-size:.98rem}
+
+/* cards */
+.card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;transition:border-color .25s,box-shadow .25s;
+}
+.card:hover{border-color:var(--border-active);box-shadow:0 0 20px var(--accent-glow)}
+.card-icon{font-size:1.6rem;margin-bottom:10px}
+.card h3{font-size:1.05rem;font-weight:600;margin-bottom:6px}
+.card p,.card li{color:var(--text-secondary);font-size:.9rem}
+
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+
+/* code blocks */
+pre{
+  background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;overflow-x:auto;font-size:.84rem;line-height:1.65;
+  font-family:var(--mono);color:var(--text-primary);position:relative;
+}
+.code-block{position:relative;margin:16px 0}
+.code-block .copy-btn{
+  position:absolute;top:8px;right:8px;background:var(--bg-tertiary);border:1px solid var(--border);
+  color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:.72rem;
+  cursor:pointer;transition:color .2s,border-color .2s;font-family:inherit;z-index:2;
+}
+.code-block .copy-btn:hover{color:var(--text-primary);border-color:var(--border-active)}
+code{font-family:var(--mono);font-size:.88em}
+p code{background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-size:.84em}
+
+/* tabs */
+.tabs{margin:24px 0}
+.tab-btns{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:0}
+.tab-btn{
+  background:none;border:none;padding:10px 20px;color:var(--text-muted);
+  font-size:.88rem;cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-2px;transition:color .2s,border-color .2s;font-family:inherit;
+}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn[aria-selected="true"]{color:var(--accent-secondary);border-bottom-color:var(--accent-secondary);font-weight:600}
+.tab-panel{display:none;padding:20px 0}
+.tab-panel[aria-hidden="false"]{display:block}
+
+/* step card */
+.step{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin-bottom:20px;border-left:3px solid var(--accent);
+}
+.step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:50%;background:var(--accent);
+  color:#fff;font-size:.82rem;font-weight:700;margin-bottom:12px;
+}
+.step h3{font-size:1rem;font-weight:600;margin-bottom:8px}
+.step p{color:var(--text-secondary);font-size:.9rem}
+
+/* build framework cards */
+.build-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin-bottom:16px;display:grid;grid-template-columns:56px 1fr;gap:16px;
+  transition:border-color .25s;
+}
+.build-card:hover{border-color:var(--border-active)}
+.build-letter{
+  width:48px;height:48px;border-radius:10px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;font-weight:800;color:#fff;
+}
+.build-card h3{font-size:1rem;font-weight:600;margin-bottom:4px}
+.build-card .build-label{color:var(--accent-secondary);font-size:.82rem;font-weight:600;margin-bottom:4px}
+.build-card p{color:var(--text-secondary);font-size:.9rem}
+
+/* do / don't grid */
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+.do-col,.dont-col{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;
+}
+.do-col h3{color:#22c55e;margin-bottom:12px;font-size:1rem}
+.dont-col h3{color:#ef4444;margin-bottom:12px;font-size:1rem}
+.do-col li,.dont-col li{
+  color:var(--text-secondary);font-size:.88rem;margin-bottom:8px;
+  list-style:none;padding-left:20px;position:relative;
+}
+.do-col li::before{content:"✓";position:absolute;left:0;color:#22c55e;font-weight:700}
+.dont-col li::before{content:"✗";position:absolute;left:0;color:#ef4444;font-weight:700}
+
+/* prompt template */
+.prompt-tpl{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:12px;position:relative;
+}
+.prompt-tpl .tpl-label{color:var(--accent-secondary);font-size:.78rem;font-weight:600;margin-bottom:6px}
+.prompt-tpl p{color:var(--text-secondary);font-size:.88rem;line-height:1.6}
+.prompt-tpl .copy-btn{
+  position:absolute;top:10px;right:10px;background:var(--bg-tertiary);border:1px solid var(--border);
+  color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:.72rem;
+  cursor:pointer;transition:color .2s,border-color .2s;font-family:inherit;
+}
+.prompt-tpl .copy-btn:hover{color:var(--text-primary);border-color:var(--border-active)}
+
+/* footer */
+.footer{
+  padding:40px 0;text-align:center;border-top:1px solid var(--border);
+  color:var(--text-muted);font-size:.85rem;margin-top:32px;
+}
+
+/* responsive */
+@media(max-width:768px){
+  .grid-3{grid-template-columns:1fr}
+  .grid-4{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr}
+  .do-dont{grid-template-columns:1fr}
+  .build-card{grid-template-columns:48px 1fr}
+  .hero{padding:56px 0 40px}
+  section{padding:40px 0}
+  .tab-btn{padding:8px 14px;font-size:.82rem}
+}
+@media(max-width:600px){
+  .container{padding:0 16px}
+  .stats{gap:8px}
+  .stats span{padding:5px 10px;font-size:.75rem}
+}
+@media(max-width:480px){
+  .hero h1{font-size:1.7rem}
+  .tab-btns{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge reveal"><span class="dot"></span>AI 编程最佳实践</div>
+    <h1 class="reveal">AI 辅助架构设计</h1>
+    <p class="subtitle reveal">用 AI 做技术方案设计 — 系统架构、API 设计、数据库建模，从需求到方案全流程</p>
+    <div class="stats reveal">
+      <span>3 阶段设计流程</span>
+      <span>BUILD 框架</span>
+      <span>3 种架构对比</span>
+      <span>完整案例</span>
+    </div>
+  </div>
+</header>
+
+<!-- ===== §1: 这是什么？ ===== -->
+<section>
+  <div class="container">
+    <h2 class="section-title reveal">🏗️ AI 如何辅助架构设计？</h2>
+    <p class="section-lead reveal">用 AI 辅助技术方案的各个环节 — 需求分析、方案设计、架构评审、技术选型，让架构设计更高效、更全面。</p>
+
+    <div class="grid-3">
+      <div class="card reveal">
+        <div class="card-icon">📋</div>
+        <h3>需求分析</h3>
+        <p>AI 帮你从模糊需求中提取技术约束和非功能性需求，梳理系统核心能力与质量属性。</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">🎨</div>
+        <h3>方案设计</h3>
+        <p>AI 生成架构图描述、API 接口设计、数据库 Schema，帮你快速产出技术方案初稿。</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">🔍</div>
+        <h3>方案评审</h3>
+        <p>AI 从可扩展性、安全性、性能角度评审你的设计，发现潜在风险和改进空间。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §2: 能做什么？ ===== -->
+<section>
+  <div class="container">
+    <h2 class="section-title reveal">🚀 AI 在架构设计中的 4 大能力</h2>
+    <p class="section-lead reveal">从架构描述到技术选型，AI 覆盖架构设计的核心环节。</p>
+
+    <div class="grid-4">
+      <div class="card reveal">
+        <div class="card-icon">📊</div>
+        <h3>生成架构描述</h3>
+        <p>根据需求描述系统组件、交互流程、部署拓扑，输出清晰的架构文档和组件图说明。</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">🔌</div>
+        <h3>设计 API 接口</h3>
+        <p>RESTful API / GraphQL Schema 设计，包括端点定义、请求响应格式和接口文档。</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">🗄️</div>
+        <h3>数据库建模</h3>
+        <p>实体关系设计、Schema 定义、索引策略，帮你设计高效的数据存储方案。</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">⚖️</div>
+        <h3>技术选型分析</h3>
+        <p>多种技术方案的优劣对比和推荐，结合场景给出有理有据的选型建议。</p>
+      </div>
+    </div>
+
+    <!-- tab comparison -->
+    <div class="tabs reveal" role="tablist" aria-label="架构风格对比">
+      <div class="tab-btns" role="tablist">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-mono" id="tab-mono">单体架构</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-micro" id="tab-micro">微服务</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-sls" id="tab-sls">Serverless</button>
+      </div>
+
+      <div class="tab-panel" id="panel-mono" role="tabpanel" aria-labelledby="tab-mono" aria-hidden="false">
+        <div class="card" style="margin-top:16px">
+          <h3>单体架构 (Monolithic)</h3>
+          <p style="margin:8px 0"><strong style="color:#22c55e">优点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>开发简单，部署方便，一个包搞定</li>
+            <li>调试容易，数据一致性好管理</li>
+            <li>小团队效率高，学习成本低</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:#ef4444">缺点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>代码耦合度高，模块边界模糊</li>
+            <li>扩展困难，只能整体扩容</li>
+            <li>技术栈固定，升级影响全局</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:var(--accent-secondary)">适用场景：</strong><span style="color:var(--text-secondary);font-size:.9rem">早期项目、小型团队、MVP 验证、业务逻辑简单的系统</span></p>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-micro" role="tabpanel" aria-labelledby="tab-micro" aria-hidden="true">
+        <div class="card" style="margin-top:16px">
+          <h3>微服务架构 (Microservices)</h3>
+          <p style="margin:8px 0"><strong style="color:#22c55e">优点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>服务独立部署，故障隔离好</li>
+            <li>技术栈灵活，各服务可用不同语言</li>
+            <li>水平扩展灵活，按需扩缩容</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:#ef4444">缺点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>运维复杂度高，需要完善的基础设施</li>
+            <li>分布式事务处理困难</li>
+            <li>服务间通信延迟，调试链路复杂</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:var(--accent-secondary)">适用场景：</strong><span style="color:var(--text-secondary);font-size:.9rem">中大型项目、多团队协作、高可用要求、业务复杂且需要独立演进</span></p>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-sls" role="tabpanel" aria-labelledby="tab-sls" aria-hidden="true">
+        <div class="card" style="margin-top:16px">
+          <h3>Serverless 架构</h3>
+          <p style="margin:8px 0"><strong style="color:#22c55e">优点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>按需付费，无需管理服务器</li>
+            <li>自动弹性伸缩，应对流量波动</li>
+            <li>开发速度快，聚焦业务逻辑</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:#ef4444">缺点：</strong></p>
+          <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+            <li>冷启动延迟，不适合低延迟场景</li>
+            <li>厂商锁定，迁移成本高</li>
+            <li>调试困难，本地开发体验差</li>
+          </ul>
+          <p style="margin:8px 0"><strong style="color:var(--accent-secondary)">适用场景：</strong><span style="color:var(--text-secondary);font-size:.9rem">事件驱动型应用、流量波动大的场景、快速原型开发、定时任务处理</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §3: BUILD 框架 ===== -->
+<section>
+  <div class="container">
+    <h2 class="section-title reveal">🛠️ BUILD 框架：AI 辅助架构设计 5 步法</h2>
+    <p class="section-lead reveal">一套结构化的方法，让你和 AI 高效协作完成架构设计。</p>
+
+    <div class="build-card reveal">
+      <div class="build-letter">B</div>
+      <div>
+        <div class="build-label">Boundaries — 边界</div>
+        <h3>明确系统边界和外部依赖</h3>
+        <p>定义系统要做什么、不做什么，识别外部系统集成、第三方服务依赖。</p>
+        <div class="code-block">
+          <button class="copy-btn" data-copy="我正在设计一个 [系统名称]。请帮我分析以下需求，明确系统边界：\n1. 核心功能范围（系统要做什么）\n2. 排除范围（什么不在系统内）\n3. 外部系统依赖（需要集成哪些第三方服务）\n4. 用户角色和权限边界\n\n需求描述：[粘贴你的需求文档]">复制</button>
+          <pre>我正在设计一个 [系统名称]。请帮我分析以下需求，明确系统边界：
+1. 核心功能范围（系统要做什么）
+2. 排除范围（什么不在系统内）
+3. 外部系统依赖（需要集成哪些第三方服务）
+4. 用户角色和权限边界
+
+需求描述：[粘贴你的需求文档]</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="build-letter">U</div>
+      <div>
+        <div class="build-label">Use-cases — 用例</div>
+        <h3>梳理核心用例和用户旅程</h3>
+        <p>识别系统核心用例，描述用户操作流程、数据流向和异常处理路径。</p>
+        <div class="code-block">
+          <button class="copy-btn" data-copy="基于以下系统边界，帮我梳理核心用例：\n\n系统边界：[上一步的输出]\n\n请输出：\n1. 核心用例列表（按优先级排序）\n2. 每个用例的用户旅程（Happy Path + 异常路径）\n3. 用例之间的依赖关系\n4. 非功能性需求（性能、可用性、安全性指标）">复制</button>
+          <pre>基于以下系统边界，帮我梳理核心用例：
+
+系统边界：[上一步的输出]
+
+请输出：
+1. 核心用例列表（按优先级排序）
+2. 每个用例的用户旅程（Happy Path + 异常路径）
+3. 用例之间的依赖关系
+4. 非功能性需求（性能、可用性、安全性指标）</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="build-letter">I</div>
+      <div>
+        <div class="build-label">Interfaces — 接口</div>
+        <h3>设计 API 契约和服务间通信</h3>
+        <p>定义 API 端点、请求响应格式、错误码规范、服务间调用协议。</p>
+        <div class="code-block">
+          <button class="copy-btn" data-copy="基于以下用例，设计 RESTful API 接口：\n\n核心用例：[上一步的用例列表]\n\n请输出：\n1. API 端点列表（Method + Path + 描述）\n2. 请求/响应的 JSON Schema\n3. 错误码规范（HTTP 状态码 + 业务错误码）\n4. 认证和授权方案\n5. API 版本策略">复制</button>
+          <pre>基于以下用例，设计 RESTful API 接口：
+
+核心用例：[上一步的用例列表]
+
+请输出：
+1. API 端点列表（Method + Path + 描述）
+2. 请求/响应的 JSON Schema
+3. 错误码规范（HTTP 状态码 + 业务错误码）
+4. 认证和授权方案
+5. API 版本策略</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="build-letter">L</div>
+      <div>
+        <div class="build-label">Layers — 分层</div>
+        <h3>确定技术分层和组件职责</h3>
+        <p>划分系统层次、确定各组件职责、定义层间依赖规则。</p>
+        <div class="code-block">
+          <button class="copy-btn" data-copy="基于已设计的 API 接口，帮我做系统分层设计：\n\nAPI 列表：[上一步的接口设计]\n技术约束：[语言/框架偏好、团队能力等]\n\n请输出：\n1. 系统分层架构（展示层、业务层、数据层等）\n2. 每层的核心组件和职责\n3. 层间依赖规则和通信方式\n4. 关键设计模式的应用（如 Repository、CQRS 等）">复制</button>
+          <pre>基于已设计的 API 接口，帮我做系统分层设计：
+
+API 列表：[上一步的接口设计]
+技术约束：[语言/框架偏好、团队能力等]
+
+请输出：
+1. 系统分层架构（展示层、业务层、数据层等）
+2. 每层的核心组件和职责
+3. 层间依赖规则和通信方式
+4. 关键设计模式的应用（如 Repository、CQRS 等）</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="build-card reveal">
+      <div class="build-letter">D</div>
+      <div>
+        <div class="build-label">Data — 数据</div>
+        <h3>设计数据模型和存储方案</h3>
+        <p>设计实体关系、数据库 Schema、缓存策略、数据流转方案。</p>
+        <div class="code-block">
+          <button class="copy-btn" data-copy="基于系统分层设计，帮我设计数据模型：\n\n核心用例：[用例列表]\nAPI 接口：[接口设计]\n\n请输出：\n1. 实体关系图（ER 图描述）\n2. 数据库表结构（SQL DDL）\n3. 索引设计策略\n4. 缓存策略（什么数据缓存、过期策略）\n5. 数据一致性保障方案">复制</button>
+          <pre>基于系统分层设计，帮我设计数据模型：
+
+核心用例：[用例列表]
+API 接口：[接口设计]
+
+请输出：
+1. 实体关系图（ER 图描述）
+2. 数据库表结构（SQL DDL）
+3. 索引设计策略
+4. 缓存策略（什么数据缓存、过期策略）
+5. 数据一致性保障方案</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §4: 实战案例 ===== -->
+<section>
+  <div class="container">
+    <h2 class="section-title reveal">💡 完整实战：电商系统架构设计</h2>
+    <p class="section-lead reveal">用 BUILD 框架一步步完成一个电商系统的架构设计，展示 AI 在每个环节的实际输出。</p>
+
+    <!-- Step 1 -->
+    <div class="step reveal">
+      <div class="step-num">1</div>
+      <h3>需求分析 — AI 提取技术需求</h3>
+      <p>把产品需求抛给 AI，让它帮你提取技术约束和非功能性需求。</p>
+      <div class="code-block">
+        <button class="copy-btn" data-copy="我要设计一个电商系统，支持以下功能：\n- 用户注册登录、个人中心\n- 商品浏览、搜索、分类筛选\n- 购物车、下单、在线支付\n- 订单管理、物流追踪\n- 商家后台：商品管理、订单处理\n\n预期规模：日活 10 万用户，峰值 QPS 5000\n\n请分析：\n1. 核心技术需求\n2. 非功能性需求（性能、可用性、安全性）\n3. 技术挑战和风险点">复制</button>
+        <pre>我要设计一个电商系统，支持以下功能：
+- 用户注册登录、个人中心
+- 商品浏览、搜索、分类筛选
+- 购物车、下单、在线支付
+- 订单管理、物流追踪
+- 商家后台：商品管理、订单处理
+
+预期规模：日活 10 万用户，峰值 QPS 5000
+
+请分析：
+1. 核心技术需求
+2. 非功能性需求（性能、可用性、安全性）
+3. 技术挑战和风险点</pre>
+      </div>
+      <div class="card" style="margin-top:12px;border-left:3px solid var(--accent-secondary)">
+        <p style="color:var(--accent-secondary);font-size:.82rem;font-weight:600;margin-bottom:8px">🤖 AI 输出示例</p>
+        <p><strong>核心技术需求：</strong>用户认证系统、商品搜索引擎、购物车状态管理、支付网关集成、订单状态机、物流 API 对接</p>
+        <p style="margin-top:6px"><strong>非功能性需求：</strong>API 响应 &lt; 200ms（P99）、可用性 99.9%、支付数据加密、SQL 注入防护</p>
+        <p style="margin-top:6px"><strong>风险点：</strong>秒杀场景超卖、支付回调一致性、搜索性能瓶颈</p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step reveal">
+      <div class="step-num">2</div>
+      <h3>系统边界 — 定义组件和外部依赖</h3>
+      <p>明确系统包含哪些核心服务模块，以及需要对接的外部系统。</p>
+      <div class="card" style="margin-top:12px;border-left:3px solid var(--accent-secondary)">
+        <p style="color:var(--accent-secondary);font-size:.82rem;font-weight:600;margin-bottom:8px">🤖 AI 输出示例</p>
+        <p><strong>核心模块：</strong></p>
+        <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+          <li>用户服务 — 注册、登录、OAuth、个人信息</li>
+          <li>商品服务 — 商品 CRUD、分类、库存管理</li>
+          <li>搜索服务 — 全文搜索、筛选、排序</li>
+          <li>订单服务 — 下单、状态流转、退款</li>
+          <li>支付服务 — 支付接入、回调处理、对账</li>
+        </ul>
+        <p style="margin-top:8px"><strong>外部依赖：</strong>微信/支付宝支付 API、短信服务（阿里云）、对象存储（OSS）、物流查询 API</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step reveal">
+      <div class="step-num">3</div>
+      <h3>API 设计 — RESTful API 端点</h3>
+      <p>让 AI 根据用例生成标准化的 API 设计。</p>
+      <div class="code-block">
+        <button class="copy-btn" data-copy="# 商品 API\nGET    /api/v1/products              # 商品列表（分页 + 筛选）\nGET    /api/v1/products/:id          # 商品详情\nPOST   /api/v1/products              # 创建商品（商家）\nPUT    /api/v1/products/:id          # 更新商品（商家）\n\n# 购物车 API\nGET    /api/v1/cart                   # 获取购物车\nPOST   /api/v1/cart/items            # 添加商品到购物车\nPATCH  /api/v1/cart/items/:id        # 修改数量\nDELETE /api/v1/cart/items/:id        # 删除商品\n\n# 订单 API\nPOST   /api/v1/orders                # 创建订单\nGET    /api/v1/orders/:id            # 订单详情\nPATCH  /api/v1/orders/:id/cancel     # 取消订单\nGET    /api/v1/orders                # 订单列表">复制</button>
+        <pre># 商品 API
+GET    /api/v1/products              # 商品列表（分页 + 筛选）
+GET    /api/v1/products/:id          # 商品详情
+POST   /api/v1/products              # 创建商品（商家）
+PUT    /api/v1/products/:id          # 更新商品（商家）
+
+# 购物车 API
+GET    /api/v1/cart                   # 获取购物车
+POST   /api/v1/cart/items            # 添加商品到购物车
+PATCH  /api/v1/cart/items/:id        # 修改数量
+DELETE /api/v1/cart/items/:id        # 删除商品
+
+# 订单 API
+POST   /api/v1/orders                # 创建订单
+GET    /api/v1/orders/:id            # 订单详情
+PATCH  /api/v1/orders/:id/cancel     # 取消订单
+GET    /api/v1/orders                # 订单列表</pre>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step reveal">
+      <div class="step-num">4</div>
+      <h3>数据库 Schema — 实体关系与表结构</h3>
+      <p>AI 根据业务模型生成数据库 Schema 和索引策略。</p>
+      <div class="code-block">
+        <button class="copy-btn" data-copy="-- 用户表\nCREATE TABLE users (\n    id          BIGINT PRIMARY KEY AUTO_INCREMENT,\n    phone       VARCHAR(20) UNIQUE NOT NULL,\n    nickname    VARCHAR(50) NOT NULL,\n    avatar_url  VARCHAR(500),\n    password    VARCHAR(255) NOT NULL,\n    status      TINYINT DEFAULT 1,\n    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n    INDEX idx_phone (phone)\n);\n\n-- 商品表\nCREATE TABLE products (\n    id            BIGINT PRIMARY KEY AUTO_INCREMENT,\n    title         VARCHAR(200) NOT NULL,\n    description   TEXT,\n    price         DECIMAL(10,2) NOT NULL,\n    stock         INT UNSIGNED DEFAULT 0,\n    category_id   BIGINT NOT NULL,\n    seller_id     BIGINT NOT NULL,\n    status        TINYINT DEFAULT 1,\n    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,\n    INDEX idx_category (category_id),\n    INDEX idx_seller (seller_id),\n    INDEX idx_status_created (status, created_at)\n);\n\n-- 订单表\nCREATE TABLE orders (\n    id            BIGINT PRIMARY KEY AUTO_INCREMENT,\n    order_no      VARCHAR(32) UNIQUE NOT NULL,\n    user_id       BIGINT NOT NULL,\n    total_amount  DECIMAL(10,2) NOT NULL,\n    status        VARCHAR(20) DEFAULT 'pending',\n    paid_at       DATETIME,\n    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,\n    INDEX idx_user_status (user_id, status),\n    INDEX idx_order_no (order_no)\n);">复制</button>
+        <pre>-- 用户表
+CREATE TABLE users (
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    phone       VARCHAR(20) UNIQUE NOT NULL,
+    nickname    VARCHAR(50) NOT NULL,
+    avatar_url  VARCHAR(500),
+    password    VARCHAR(255) NOT NULL,
+    status      TINYINT DEFAULT 1,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_phone (phone)
+);
+
+-- 商品表
+CREATE TABLE products (
+    id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title         VARCHAR(200) NOT NULL,
+    description   TEXT,
+    price         DECIMAL(10,2) NOT NULL,
+    stock         INT UNSIGNED DEFAULT 0,
+    category_id   BIGINT NOT NULL,
+    seller_id     BIGINT NOT NULL,
+    status        TINYINT DEFAULT 1,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_category (category_id),
+    INDEX idx_seller (seller_id),
+    INDEX idx_status_created (status, created_at)
+);
+
+-- 订单表
+CREATE TABLE orders (
+    id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_no      VARCHAR(32) UNIQUE NOT NULL,
+    user_id       BIGINT NOT NULL,
+    total_amount  DECIMAL(10,2) NOT NULL,
+    status        VARCHAR(20) DEFAULT 'pending',
+    paid_at       DATETIME,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_status (user_id, status),
+    INDEX idx_order_no (order_no)
+);</pre>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step reveal">
+      <div class="step-num">5</div>
+      <h3>架构评审 — AI 评审设计方案</h3>
+      <p>让 AI 从多个维度评审你的架构设计，发现潜在问题。</p>
+      <div class="code-block">
+        <button class="copy-btn" data-copy="请评审以下电商系统架构设计，从以下维度分析：\n\n1. 可扩展性：系统能否支撑 10x 流量增长？\n2. 可用性：单点故障在哪里？如何做高可用？\n3. 安全性：有哪些安全风险？如何防护？\n4. 性能：瓶颈在哪里？如何优化？\n5. 可维护性：代码和架构是否便于长期维护？\n\n[粘贴你的架构设计文档]">复制</button>
+        <pre>请评审以下电商系统架构设计，从以下维度分析：
+
+1. 可扩展性：系统能否支撑 10x 流量增长？
+2. 可用性：单点故障在哪里？如何做高可用？
+3. 安全性：有哪些安全风险？如何防护？
+4. 性能：瓶颈在哪里？如何优化？
+5. 可维护性：代码和架构是否便于长期维护？
+
+[粘贴你的架构设计文档]</pre>
+      </div>
+      <div class="card" style="margin-top:12px;border-left:3px solid #f59e0b">
+        <p style="color:#f59e0b;font-size:.82rem;font-weight:600;margin-bottom:8px">🤖 AI 评审建议示例</p>
+        <ul style="padding-left:20px;color:var(--text-secondary);font-size:.9rem">
+          <li><strong>库存超卖风险：</strong>建议用 Redis 分布式锁或数据库乐观锁处理并发扣减</li>
+          <li><strong>搜索性能：</strong>商品搜索应接入 Elasticsearch，避免数据库 LIKE 查询</li>
+          <li><strong>支付一致性：</strong>支付回调需幂等设计，建议用消息队列做最终一致性</li>
+          <li><strong>缓存策略：</strong>商品详情页建议加 Redis 缓存，热点商品用本地缓存兜底</li>
+          <li><strong>安全建议：</strong>敏感接口加限流、支付金额服务端校验、SQL 参数化查询</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §5: 速查表 ===== -->
+<section>
+  <div class="container">
+    <h2 class="section-title reveal">📋 架构设计速查表</h2>
+    <p class="section-lead reveal">快速参考：架构设计的最佳实践和常见误区。</p>
+
+    <div class="do-dont reveal">
+      <div class="do-col">
+        <h3>✅ 推荐做法</h3>
+        <ul>
+          <li>先用 AI 做需求分析再设计</li>
+          <li>让 AI 列出多种方案再选择</li>
+          <li>用 AI 做架构决策记录 (ADR)</li>
+          <li>让 AI 从不同角度评审设计</li>
+          <li>迭代优化而非一次完成</li>
+        </ul>
+      </div>
+      <div class="dont-col">
+        <h3>❌ 常见误区</h3>
+        <ul>
+          <li>完全依赖 AI 做架构决策</li>
+          <li>不考虑团队能力直接选方案</li>
+          <li>忽略非功能性需求</li>
+          <li>跳过性能和安全评审</li>
+          <li>照搬 AI 建议不做验证</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- quick prompts -->
+    <h3 class="reveal" style="margin:32px 0 16px;font-size:1.05rem">⚡ 常用 Prompt 模板</h3>
+
+    <div class="prompt-tpl reveal">
+      <div class="tpl-label">🏗️ 架构设计启动</div>
+      <p>我要设计一个 [系统类型]，预期用户量 [X]，核心功能是 [功能列表]。请推荐架构方案，包括：技术栈选择、服务拆分策略、部署方案，并说明每个选择的理由。</p>
+      <button class="copy-btn" data-copy="我要设计一个 [系统类型]，预期用户量 [X]，核心功能是 [功能列表]。请推荐架构方案，包括：技术栈选择、服务拆分策略、部署方案，并说明每个选择的理由。">复制</button>
+    </div>
+
+    <div class="prompt-tpl reveal">
+      <div class="tpl-label">🔌 API 设计</div>
+      <p>请为 [业务模块] 设计 RESTful API，包括：端点列表、请求/响应格式（JSON Schema）、HTTP 状态码使用规范、分页和过滤参数设计、认证方式。遵循 RESTful 最佳实践。</p>
+      <button class="copy-btn" data-copy="请为 [业务模块] 设计 RESTful API，包括：端点列表、请求/响应格式（JSON Schema）、HTTP 状态码使用规范、分页和过滤参数设计、认证方式。遵循 RESTful 最佳实践。">复制</button>
+    </div>
+
+    <div class="prompt-tpl reveal">
+      <div class="tpl-label">🗄️ 数据库建模</div>
+      <p>基于以下业务需求，设计数据库表结构：[需求描述]。请输出：ER 图描述、SQL DDL、索引策略、数据量预估、是否需要分库分表的建议。</p>
+      <button class="copy-btn" data-copy="基于以下业务需求，设计数据库表结构：[需求描述]。请输出：ER 图描述、SQL DDL、索引策略、数据量预估、是否需要分库分表的建议。">复制</button>
+    </div>
+
+    <div class="prompt-tpl reveal">
+      <div class="tpl-label">⚖️ 技术选型</div>
+      <p>我需要在 [选项A] 和 [选项B] 之间选择 [用途]。请从以下维度对比：性能、学习曲线、社区生态、运维成本、团队匹配度，并给出推荐和理由。</p>
+      <button class="copy-btn" data-copy="我需要在 [选项A] 和 [选项B] 之间选择 [用途]。请从以下维度对比：性能、学习曲线、社区生态、运维成本、团队匹配度，并给出推荐和理由。">复制</button>
+    </div>
+
+    <div class="prompt-tpl reveal">
+      <div class="tpl-label">🔍 架构评审</div>
+      <p>请评审以下架构设计：[粘贴设计文档]。请从可扩展性、可用性、安全性、性能、可维护性 5 个维度分析，列出风险点和改进建议，优先级从高到低排列。</p>
+      <button class="copy-btn" data-copy="请评审以下架构设计：[粘贴设计文档]。请从可扩展性、可用性、安全性、性能、可维护性 5 个维度分析，列出风险点和改进建议，优先级从高到低排列。">复制</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>AI 辅助架构设计 · 系统架构与技术方案</p>
+    <p style="margin-top:8px;font-size:.78rem">由 <a href="#">followAI</a> 出品 · 2025</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- scroll reveal ---- */
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add("visible");obs.unobserve(e.target)}})
+  },{threshold:.12});
+  document.querySelectorAll(".reveal").forEach(function(el){obs.observe(el)});
+
+  /* ---- tabs with keyboard nav ---- */
+  document.querySelectorAll(".tabs").forEach(function(tabGroup){
+    var btns=tabGroup.querySelectorAll(".tab-btn");
+    var panels=tabGroup.querySelectorAll(".tab-panel");
+
+    function activate(btn){
+      btns.forEach(function(b){b.setAttribute("aria-selected","false")});
+      panels.forEach(function(p){p.setAttribute("aria-hidden","true")});
+      btn.setAttribute("aria-selected","true");
+      var target=document.getElementById(btn.getAttribute("aria-controls"));
+      if(target)target.setAttribute("aria-hidden","false");
+      btn.focus();
+    }
+
+    btns.forEach(function(btn){
+      btn.addEventListener("click",function(){activate(btn)});
+
+      btn.addEventListener("keydown",function(e){
+        var idx=Array.prototype.indexOf.call(btns,btn);
+        var next=-1;
+        if(e.key==="ArrowRight"||e.key==="ArrowDown"){next=(idx+1)%btns.length}
+        else if(e.key==="ArrowLeft"||e.key==="ArrowUp"){next=(idx-1+btns.length)%btns.length}
+        else if(e.key==="Home"){next=0}
+        else if(e.key==="End"){next=btns.length-1}
+        if(next>=0){e.preventDefault();activate(btns[next])}
+      });
+    });
+  });
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copy-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var text=btn.getAttribute("data-copy");
+      if(!text){
+        var block=btn.closest(".code-block")||btn.closest(".prompt-tpl");
+        if(block){
+          var pre=block.querySelector("pre");
+          var p=block.querySelector("p");
+          text=pre?pre.textContent:p?p.textContent:"";
+        }
+      }
+      if(!text)return;
+
+      function onSuccess(){
+        var orig=btn.textContent;
+        btn.textContent="已复制 ✓";
+        setTimeout(function(){btn.textContent=orig},1800);
+      }
+
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(onSuccess).catch(fallback);
+      }else{fallback()}
+
+      function fallback(){
+        var ta=document.createElement("textarea");
+        ta.value=text;ta.style.cssText="position:fixed;left:-9999px;top:-9999px;opacity:0";
+        document.body.appendChild(ta);ta.select();
+        try{document.execCommand("copy");onSuccess()}catch(err){}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

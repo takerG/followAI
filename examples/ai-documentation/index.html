@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 写文档最佳实践 — 交互式指南</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0f0b1e;--bg-secondary:#1a1333;--bg-tertiary:#251d40;
+  --bg-card:#1a1333;--border:#2d2252;--border-active:#8b5cf6;
+  --text-primary:#e2e8f0;--text-secondary:#a0aec0;--text-muted:#6b7280;
+  --accent:#8b5cf6;--accent-secondary:#a855f7;--accent-glow:rgba(139,92,246,.15);
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow:0 2px 8px rgba(0,0,0,.3);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.4);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+  --mono:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.7;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none;transition:var(--transition)}
+a:hover{color:var(--accent-secondary)}
+
+/* ===== BG GRID ===== */
+.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(139,92,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.04) 1px,transparent 1px);
+  background-size:60px 60px;animation:gridMove 20s linear infinite}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
+
+/* ===== REVEAL ===== */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+
+/* ===== CONTAINER ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+section{padding:5rem 0;position:relative;z-index:1}
+.section-header{text-align:center;margin-bottom:3rem}
+.section-header h2{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;margin-bottom:.5rem}
+.section-header p{color:var(--text-secondary);max-width:560px;margin:0 auto;font-size:1.05rem}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 1.5rem 4rem;position:relative;overflow:hidden;z-index:1}
+.hero::before{content:"";position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.18),transparent 70%);top:-200px;right:-100px;animation:float 8s ease-in-out infinite}
+.hero::after{content:"";position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(168,85,247,.12),transparent 70%);bottom:-100px;left:-50px;animation:float 10s ease-in-out infinite reverse}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+.hero-content{position:relative;z-index:1;max-width:740px}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem 1rem;border-radius:50px;background:var(--accent-glow);border:1px solid var(--border);color:var(--accent);font-size:.8rem;font-weight:600;margin-bottom:1.5rem;letter-spacing:.5px}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+.hero h1{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;line-height:1.2;margin-bottom:1rem}
+.hero h1 .gradient{background:linear-gradient(135deg,#8b5cf6,#c4b5fd,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p.subtitle{font-size:1.1rem;color:var(--text-secondary);max-width:580px;margin:0 auto 2.5rem}
+.hero-stats{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap}
+.hero-stat{text-align:center;padding:.75rem 1.25rem;border-radius:var(--radius);background:rgba(139,92,246,.08);border:1px solid var(--border)}
+.hero-stat .val{font-size:.95rem;font-weight:700;color:var(--accent)}
+.hero-stat .label{font-size:.72rem;color:var(--text-muted);margin-top:2px}
+
+/* ===== CARDS ===== */
+.card-grid{display:grid;gap:1.25rem}
+.card-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.card-grid.cols-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:768px){.card-grid.cols-3,.card-grid.cols-4{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.card-grid.cols-3,.card-grid.cols-4{grid-template-columns:1fr}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;transition:var(--transition)}
+.card:hover{border-color:var(--border-active);transform:translateY(-2px);box-shadow:0 0 20px var(--accent-glow)}
+.card .icon{font-size:1.75rem;margin-bottom:.75rem}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:.35rem}
+.card p{font-size:.88rem;color:var(--text-secondary);line-height:1.6}
+
+/* ===== TABS ===== */
+.tab-nav{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;justify-content:center}
+.tab-btn{padding:.55rem 1.25rem;border-radius:50px;border:1.5px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;font-size:.85rem;font-weight:600;transition:var(--transition);font-family:inherit}
+.tab-btn:hover{border-color:var(--accent);color:var(--text-primary)}
+.tab-btn[aria-selected="true"],.tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== CODE BLOCKS ===== */
+.code-block{position:relative;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:.75rem 0}
+.code-block-header{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:.75rem;color:var(--text-muted)}
+.code-block pre{padding:1rem;font-size:.82rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);color:var(--text-primary);overflow-x:auto}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:.25rem .6rem;border-radius:var(--radius-sm);font-size:.72rem;cursor:pointer;transition:var(--transition);font-family:inherit}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{border-color:#10b981;color:#10b981}
+
+/* ===== FRAMEWORK ===== */
+.framework-grid{display:grid;gap:1.25rem}
+.framework-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;display:grid;grid-template-columns:auto 1fr;gap:1.25rem;transition:var(--transition)}
+.framework-card:hover{border-color:var(--border-active);box-shadow:0 0 20px var(--accent-glow)}
+.framework-letter{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;color:#fff;flex-shrink:0}
+.framework-card:nth-child(1) .framework-letter{background:linear-gradient(135deg,#8b5cf6,#a78bfa)}
+.framework-card:nth-child(2) .framework-letter{background:linear-gradient(135deg,#6366f1,#818cf8)}
+.framework-card:nth-child(3) .framework-letter{background:linear-gradient(135deg,#ec4899,#f472b6)}
+.framework-card:nth-child(4) .framework-letter{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.framework-card:nth-child(5) .framework-letter{background:linear-gradient(135deg,#10b981,#34d399)}
+.framework-content h3{font-size:1.05rem;font-weight:700;margin-bottom:.25rem}
+.framework-content h3 span{color:var(--text-muted);font-weight:400;font-size:.88rem;margin-left:.5rem}
+.framework-content p{font-size:.88rem;color:var(--text-secondary);line-height:1.6}
+
+/* ===== STEPS ===== */
+.steps{display:grid;gap:2rem;counter-reset:step}
+.step{counter-increment:step;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;position:relative;transition:var(--transition)}
+.step:hover{border-color:var(--border-active)}
+.step-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.step-num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0}
+.step-title{font-size:1.05rem;font-weight:700}
+
+/* ===== DO / DON'T ===== */
+.do-dont-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:600px){.do-dont-grid{grid-template-columns:1fr}}
+.do-card,.dont-card{border-radius:var(--radius-lg);border:1px solid;padding:1.5rem}
+.do-card{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+.dont-card{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+.do-card h3{color:#10b981;margin-bottom:1rem;font-size:1rem}
+.dont-card h3{color:#ef4444;margin-bottom:1rem;font-size:1rem}
+.do-card li,.dont-card li{font-size:.88rem;color:var(--text-secondary);line-height:1.7;margin-bottom:.35rem;list-style:none;padding-left:1.4rem;position:relative}
+.do-card li::before{content:"✓";position:absolute;left:0;color:#10b981;font-weight:700}
+.dont-card li::before{content:"✗";position:absolute;left:0;color:#ef4444;font-weight:700}
+
+/* ===== QUICK PROMPTS ===== */
+.prompt-list{display:grid;gap:.75rem}
+.prompt-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;transition:var(--transition)}
+.prompt-item:hover{border-color:var(--border-active)}
+.prompt-item p{font-size:.88rem;color:var(--text-secondary);line-height:1.6;font-family:var(--mono)}
+.prompt-item .label{font-size:.72rem;color:var(--accent);font-weight:600;margin-bottom:.25rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif}
+
+/* ===== FOOTER ===== */
+.footer{padding:3rem 0;text-align:center;border-top:1px solid var(--border);color:var(--text-muted);font-size:.85rem;position:relative;z-index:1}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  section{padding:3.5rem 0}
+  .hero{padding:5rem 1.25rem 3rem}
+  .hero-stats{gap:1rem}
+  .framework-card{grid-template-columns:1fr;text-align:center}
+  .framework-letter{margin:0 auto}
+}
+@media(max-width:600px){
+  .hero h1{font-size:clamp(1.6rem,6vw,2.2rem)}
+  .tab-nav{gap:.35rem}
+  .tab-btn{padding:.45rem .9rem;font-size:.78rem}
+}
+@media(max-width:480px){
+  .hero-stats{flex-direction:column;align-items:center}
+  .hero-stat{width:100%;max-width:240px}
+  .container{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span>AI 编程最佳实践</div>
+    <h1><span class="gradient">AI 写文档最佳实践</span></h1>
+    <p class="subtitle">用 AI 生成高质量技术文档 — 代码注释、API 文档、Commit Message、README 全覆盖</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val">4 种文档类型</div><div class="label">全面覆盖</div></div>
+      <div class="hero-stat"><div class="val">WRITE 框架</div><div class="label">方法论指导</div></div>
+      <div class="hero-stat"><div class="val">即用 Prompt</div><div class="label">模板库</div></div>
+      <div class="hero-stat"><div class="val">质量对比</div><div class="label">好坏示例</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== §1: 这是什么？ ===== -->
+<section id="what">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>📝 为什么用 AI 写文档？</h2>
+      <p>写代码是乐趣，写文档是负担 — AI 能帮你翻转这个等式</p>
+    </div>
+
+    <div class="card-grid cols-3 reveal">
+      <div class="card">
+        <div class="icon">😫</div>
+        <h3>开发者的痛点</h3>
+        <p>80% 的开发者认为写文档是最无聊的工作，文档总是过时、缺失、格式混乱</p>
+      </div>
+      <div class="card">
+        <div class="icon">🤖</div>
+        <h3>AI 的优势</h3>
+        <p>AI 能读懂代码意图，快速生成结构化文档，保持一致性和规范性</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>效率提升</h3>
+        <p>原本 30 分钟的文档工作，AI 帮你 30 秒完成初稿，你只需审查优化</p>
+      </div>
+    </div>
+
+    <div style="margin-top:3rem">
+      <h3 style="text-align:center;font-size:1.1rem;margin-bottom:1.5rem;color:var(--text-secondary)" class="reveal">本教程覆盖的 4 种文档类型</h3>
+      <div class="card-grid cols-4 reveal">
+        <div class="card" style="text-align:center">
+          <div class="icon">💬</div>
+          <h3>代码注释</h3>
+          <p>JSDoc / docstring</p>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="icon">📖</div>
+          <h3>API 文档</h3>
+          <p>OpenAPI / 接口文档</p>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="icon">📋</div>
+          <h3>Commit Message</h3>
+          <p>规范化提交信息</p>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="icon">📘</div>
+          <h3>README</h3>
+          <p>项目说明文档</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §2: 四种文档场景 ===== -->
+<section id="demos" style="background:var(--bg-secondary)">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>🚀 四种文档场景</h2>
+      <p>每种类型附带 Prompt 模板、输入示例和 AI 生成输出</p>
+    </div>
+
+    <div class="reveal">
+      <div class="tab-nav" role="tablist" aria-label="文档类型">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-comment" id="tab-comment" tabindex="0">💬 代码注释</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-api" id="tab-api" tabindex="-1">📖 API 文档</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-commit" id="tab-commit" tabindex="-1">📋 Commit Message</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-readme" id="tab-readme" tabindex="-1">📘 README</button>
+      </div>
+
+      <!-- Tab 1: 代码注释 -->
+      <div class="tab-panel active" role="tabpanel" id="panel-comment" aria-labelledby="tab-comment">
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt 模板</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>为以下 TypeScript 函数添加 JSDoc 注释。
+要求：描述功能、参数、返回值、可能的异常；使用中文。
+
+```typescript
+{粘贴你的函数代码}
+```</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>输入 — 原始代码</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>async function fetchUserOrders(userId: string, status?: OrderStatus) {
+  const query = db.select().from(orders).where(eq(orders.userId, userId));
+  if (status) query.where(eq(orders.status, status));
+  const results = await query.execute();
+  if (!results.length) throw new NotFoundError(`No orders for user ${userId}`);
+  return results.map(r => formatOrder(r));
+}</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 生成输出</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>/**
+ * 获取指定用户的订单列表
+ *
+ * 根据用户 ID 查询数据库中的订单记录，支持按订单状态筛选。
+ * 查询结果会通过 formatOrder 进行格式化后返回。
+ *
+ * @param userId - 用户唯一标识符
+ * @param status - 可选，订单状态筛选条件
+ * @returns 格式化后的订单数组
+ * @throws {NotFoundError} 当该用户没有任何订单时抛出
+ *
+ * @example
+ * const orders = await fetchUserOrders('u_123');
+ * const pending = await fetchUserOrders('u_123', 'pending');
+ */
+async function fetchUserOrders(userId: string, status?: OrderStatus) {
+  // ...
+}</pre>
+        </div>
+      </div>
+
+      <!-- Tab 2: API 文档 -->
+      <div class="tab-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api">
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt 模板</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>根据以下 API 路由代码，生成 Markdown 格式的接口文档。
+包含：请求方法、路径、参数说明、请求体示例、响应示例、错误码。
+
+```typescript
+{粘贴你的路由代码}
+```</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>输入 — 路由代码</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>router.post('/api/projects/:projectId/members', auth(), async (req, res) => {
+  const { projectId } = req.params;
+  const { email, role } = req.body;
+  const project = await Project.findById(projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  if (!project.isOwner(req.user.id)) return res.status(403).json({ error: 'Forbidden' });
+  const user = await User.findByEmail(email);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  await project.addMember(user.id, role);
+  res.status(201).json({ success: true, memberId: user.id });
+});</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 生成输出</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>## POST /api/projects/:projectId/members
+
+添加项目成员。仅项目所有者有权限操作。
+
+### 请求参数
+
+| 参数      | 位置   | 类型   | 必填 | 说明           |
+|-----------|--------|--------|------|----------------|
+| projectId | path   | string | ✅   | 项目 ID        |
+| email     | body   | string | ✅   | 被邀请用户邮箱 |
+| role      | body   | string | ✅   | 成员角色       |
+
+### 请求示例
+```json
+{ "email": "dev@example.com", "role": "editor" }
+```
+
+### 成功响应 201
+```json
+{ "success": true, "memberId": "u_456" }
+```
+
+### 错误码
+| 状态码 | 说明               |
+|--------|--------------------|
+| 403    | 非项目所有者       |
+| 404    | 项目或用户不存在   |</pre>
+        </div>
+      </div>
+
+      <!-- Tab 3: Commit Message -->
+      <div class="tab-panel" role="tabpanel" id="panel-commit" aria-labelledby="tab-commit">
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt 模板</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>根据以下 git diff，生成 Conventional Commits 格式的 commit message。
+要求：type(scope): description，正文解释为什么修改，中文描述。
+
+```diff
+{粘贴你的 git diff}
+```</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>输入 — Git Diff</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>diff --git a/src/utils/retry.ts b/src/utils/retry.ts
+--- a/src/utils/retry.ts
++++ b/src/utils/retry.ts
+@@ -5,7 +5,12 @@
+ export async function retry&lt;T&gt;(fn: () => Promise&lt;T&gt;, attempts = 3) {
++  const backoff = [100, 500, 2000];
+   for (let i = 0; i &lt; attempts; i++) {
+     try { return await fn(); }
+-    catch (e) { if (i === attempts - 1) throw e; }
++    catch (e) {
++      if (i === attempts - 1) throw e;
++      await sleep(backoff[i] ?? backoff.at(-1)!);
++      console.warn(`Retry ${i + 1}/${attempts}`, e);
++    }
+   }
+ }</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 生成输出</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>feat(utils): 为 retry 工具添加指数退避和日志
+
+之前重试间没有延迟，高频失败时会瞬间耗尽重试次数。
+现在使用 100ms → 500ms → 2000ms 的退避策略，
+并在每次重试时打印警告日志便于排查。</pre>
+        </div>
+      </div>
+
+      <!-- Tab 4: README -->
+      <div class="tab-panel" role="tabpanel" id="panel-readme" aria-labelledby="tab-readme">
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt 模板</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>根据以下项目结构和 package.json，生成一份完整的 README.md。
+包含：项目简介、特性、快速开始、目录结构、技术栈、贡献指南。
+使用中文，Markdown 格式。
+
+```
+{粘贴项目结构}
+```
+```json
+{粘贴 package.json}
+```</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>输入 — 项目结构</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>my-cli-tool/
+├── src/
+│   ├── commands/
+│   │   ├── init.ts
+│   │   ├── build.ts
+│   │   └── deploy.ts
+│   ├── utils/
+│   │   ├── config.ts
+│   │   └── logger.ts
+│   └── index.ts
+├── package.json  // name: "my-cli-tool", bin: "mcli"
+└── tsconfig.json</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 生成输出</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre># my-cli-tool
+
+> 一个现代化的项目脚手架 CLI 工具，支持初始化、构建和部署。
+
+## ✨ 特性
+
+- 🚀 **一键初始化** — 交互式创建项目模板
+- 📦 **智能构建** — 自动检测框架并优化构建配置
+- 🌐 **快速部署** — 支持多平台一键部署
+
+## 🚀 快速开始
+
+```bash
+npm install -g my-cli-tool
+mcli init my-project
+cd my-project
+mcli build
+mcli deploy
+```
+
+## 📁 目录结构
+
+| 目录/文件         | 说明           |
+|-------------------|----------------|
+| src/commands/     | CLI 命令实现   |
+| src/utils/        | 工具函数       |
+| src/index.ts      | 入口文件       |
+
+## 🛠 技术栈
+
+TypeScript · Node.js · Commander.js</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §3: WRITE 框架 ===== -->
+<section id="framework">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>🛠️ WRITE 框架：高质量文档 5 步法</h2>
+      <p>系统化方法论，让 AI 每次都输出专业级文档</p>
+    </div>
+
+    <div class="framework-grid reveal">
+      <div class="framework-card">
+        <div class="framework-letter">W</div>
+        <div class="framework-content">
+          <h3>What <span>— 明确文档的目标和类型</span></h3>
+          <p>告诉 AI 你要什么类型的文档：是 JSDoc 注释、API 参考、还是用户指南？目标越清晰，输出越精准。</p>
+          <div class="code-block">
+            <div class="code-block-header"><span>示例 Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+            <pre>我需要你为这个模块生成 JSDoc 格式的代码注释，
+覆盖所有导出函数的参数、返回值和异常情况。</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="framework-card">
+        <div class="framework-letter">R</div>
+        <div class="framework-content">
+          <h3>Readers <span>— 确定读者是谁</span></h3>
+          <p>新人入职文档、团队内部 Wiki、还是开源社区 README？读者不同，文档的深度和风格完全不同。</p>
+          <div class="code-block">
+            <div class="code-block-header"><span>示例 Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+            <pre>读者是刚接触本项目的新同事，假设他们了解 React
+但不熟悉我们的业务领域，请用通俗的语言解释。</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="framework-card">
+        <div class="framework-letter">I</div>
+        <div class="framework-content">
+          <h3>Idiom <span>— 遵循文档惯用格式</span></h3>
+          <p>每种文档有自己的惯例：JSDoc 有 @param/@returns，Commit 有 Conventional Commits，API 有 OpenAPI。告诉 AI 用什么标准。</p>
+          <div class="code-block">
+            <div class="code-block-header"><span>示例 Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+            <pre>请遵循 Conventional Commits 规范：
+type(scope): description
+其中 type 为 feat/fix/docs/refactor 之一。</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="framework-card">
+        <div class="framework-letter">T</div>
+        <div class="framework-content">
+          <h3>Template <span>— 提供模板或范例给 AI</span></h3>
+          <p>给 AI 一个你期望的输出模板，它会严格按照格式生成。模板比描述更直观、更不容易出错。</p>
+          <div class="code-block">
+            <div class="code-block-header"><span>示例 Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+            <pre>请按以下模板格式生成：
+## [函数名]
+**功能**：一句话描述
+**参数**：表格形式
+**返回值**：类型 + 描述
+**示例**：代码块</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="framework-card">
+        <div class="framework-letter">E</div>
+        <div class="framework-content">
+          <h3>Examples <span>— 给 AI 展示好的文档示例</span></h3>
+          <p>Few-shot learning：给 AI 一两个你满意的文档示例，它就能学会你的风格和质量标准。</p>
+          <div class="code-block">
+            <div class="code-block-header"><span>示例 Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+            <pre>参考以下已有的文档风格来写新函数的注释：
+
+/**
+ * 计算两个日期之间的工作日天数
+ * @param start - 起始日期 (YYYY-MM-DD)
+ * @param end - 结束日期 (YYYY-MM-DD)
+ * @returns 工作日天数（不含周末和法定假日）
+ */</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §4: 实战案例 ===== -->
+<section id="practice" style="background:var(--bg-secondary)">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>💡 实战：为一个模块生成完整文档</h2>
+      <p>从分析代码到生成完整文档套件，5 步走完全流程</p>
+    </div>
+
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num">1</div>
+          <div class="step-title">分析代码 — 理解模块职责</div>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>auth.ts — 待文档化的模块</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>// auth.ts - 认证模块
+export function hashPassword(raw: string): string { /* bcrypt */ }
+export function verifyPassword(raw: string, hash: string): boolean { /* compare */ }
+export function generateToken(userId: string, role: Role): string { /* jwt sign */ }
+export function verifyToken(token: string): TokenPayload { /* jwt verify */ }
+export function requireAuth(roles?: Role[]): Middleware { /* express middleware */ }</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num">2</div>
+          <div class="step-title">生成 JSDoc — 为每个函数添加注释</div>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>为 auth.ts 中所有导出函数添加 JSDoc 注释。
+要求：中文描述，包含 @param、@returns、@throws、@example。</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 输出（节选）</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>/**
+ * 对明文密码进行哈希加密
+ *
+ * 使用 bcrypt 算法（salt rounds = 12）对用户密码进行单向加密，
+ * 适用于注册和修改密码场景。
+ *
+ * @param raw - 用户输入的明文密码
+ * @returns bcrypt 哈希字符串
+ * @throws {Error} 当密码长度超过 72 字节时抛出（bcrypt 限制）
+ *
+ * @example
+ * const hash = hashPassword('myP@ssw0rd');
+ * // => '$2b$12$...'
+ */
+export function hashPassword(raw: string): string { /* ... */ }</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num">3</div>
+          <div class="step-title">写 API 文档 — 生成接口参考</div>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>基于 auth.ts 模块，生成 Markdown 格式的 API 参考文档。
+每个函数包含：签名、描述、参数表格、返回值、示例代码。</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num">4</div>
+          <div class="step-title">写 README — 生成模块说明</div>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>为 auth 模块生成 README.md，包含：
+- 模块简介（一句话 + 详细描述）
+- 安装 / 引入方式
+- 快速使用示例（注册 → 登录 → 鉴权 完整流程）
+- API 速查表（函数名 + 一句话说明的表格）
+- 注意事项和安全建议</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-num">5</div>
+          <div class="step-title">写 CHANGELOG — 生成变更记录</div>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>Prompt</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>根据最近 5 次 commit 记录，生成 Keep a Changelog 格式的
+CHANGELOG 条目。分类：Added / Changed / Fixed / Security。
+
+最近 commits:
+- feat(auth): add role-based requireAuth middleware
+- fix(auth): handle expired token gracefully
+- refactor(auth): extract token config to env
+- feat(auth): add password strength validation
+- docs(auth): update inline comments</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>AI 输出</span><button class="copy-btn" aria-label="复制代码">复制</button></div>
+          <pre>## [1.2.0] - 2025-03-29
+
+### Added
+- 基于角色的路由鉴权中间件 `requireAuth(roles?)`
+- 密码强度校验功能
+
+### Changed
+- Token 配置提取到环境变量，支持运行时切换密钥
+
+### Fixed
+- 过期 Token 不再抛出未捕获异常，改为返回 401 响应
+
+### Docs
+- 更新所有导出函数的行内注释</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== §5: 速查表 ===== -->
+<section id="cheatsheet">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>📋 文档生成 Prompt 速查表</h2>
+      <p>快速参考：该做什么、不该做什么，以及拿来即用的 Prompt</p>
+    </div>
+
+    <div class="do-dont-grid reveal">
+      <div class="do-card">
+        <h3>✅ Do — 推荐做法</h3>
+        <ul>
+          <li>给 AI 提供函数签名和上下文</li>
+          <li>指定文档格式标准（JSDoc / OpenAPI）</li>
+          <li>要求包含使用示例</li>
+          <li>分类型逐个生成，各个击破</li>
+          <li>人工审查 AI 生成的文档</li>
+        </ul>
+      </div>
+      <div class="dont-card">
+        <h3>❌ Don't — 避免做法</h3>
+        <ul>
+          <li>不提供上下文让 AI 猜测</li>
+          <li>期望一次生成完美文档</li>
+          <li>忽略文档的一致性检查</li>
+          <li>跳过对生成内容的事实核查</li>
+          <li>用 AI 文档替代架构设计文档</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top:3rem">
+      <h3 style="text-align:center;font-size:1.1rem;margin-bottom:1.5rem;color:var(--text-secondary)" class="reveal">🚀 即用 Prompt 模板</h3>
+      <div class="prompt-list reveal">
+        <div class="prompt-item">
+          <div>
+            <div class="label">JSDoc 批量生成</div>
+            <p>为以下模块中所有导出函数生成 JSDoc 注释，包含 @param、@returns、@throws、@example，使用中文描述。</p>
+          </div>
+          <button class="copy-btn" aria-label="复制 Prompt">复制</button>
+        </div>
+        <div class="prompt-item">
+          <div>
+            <div class="label">API 接口文档</div>
+            <p>根据以下路由代码生成 Markdown 接口文档，包含请求方法、路径、参数表格、请求/响应示例、错误码说明。</p>
+          </div>
+          <button class="copy-btn" aria-label="复制 Prompt">复制</button>
+        </div>
+        <div class="prompt-item">
+          <div>
+            <div class="label">Conventional Commit</div>
+            <p>根据以下 git diff 生成 Conventional Commits 格式的 commit message，type(scope): 描述，正文解释修改原因。</p>
+          </div>
+          <button class="copy-btn" aria-label="复制 Prompt">复制</button>
+        </div>
+        <div class="prompt-item">
+          <div>
+            <div class="label">README 生成器</div>
+            <p>根据以下项目结构和 package.json 生成 README.md，包含简介、特性列表、快速开始、目录结构说明、技术栈。</p>
+          </div>
+          <button class="copy-btn" aria-label="复制 Prompt">复制</button>
+        </div>
+        <div class="prompt-item">
+          <div>
+            <div class="label">CHANGELOG 生成</div>
+            <p>根据以下 commit 列表生成 Keep a Changelog 格式的变更记录，分为 Added / Changed / Fixed / Security 类别。</p>
+          </div>
+          <button class="copy-btn" aria-label="复制 Prompt">复制</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>AI 写文档最佳实践 · 高质量技术文档</p>
+    <p style="margin-top:8px;font-size:.78rem">由 <a href="#">followAI</a> 出品 · 2025</p>
+  </div>
+</footer>
+
+<script>
+;(function(){
+  "use strict";
+
+  /* ===== Scroll Reveal ===== */
+  var revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function(el) { observer.observe(el); });
+  } else {
+    revealEls.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  /* ===== Tabs ===== */
+  var tabLists = document.querySelectorAll('[role="tablist"]');
+  tabLists.forEach(function(tabList) {
+    var tabs = tabList.querySelectorAll('[role="tab"]');
+    var panels = [];
+    tabs.forEach(function(tab) {
+      var panelId = tab.getAttribute('aria-controls');
+      if (panelId) panels.push(document.getElementById(panelId));
+    });
+
+    function activateTab(targetTab) {
+      tabs.forEach(function(t, i) {
+        var selected = t === targetTab;
+        t.setAttribute('aria-selected', selected ? 'true' : 'false');
+        t.classList.toggle('active', selected);
+        t.tabIndex = selected ? 0 : -1;
+        if (panels[i]) panels[i].classList.toggle('active', selected);
+      });
+      targetTab.focus();
+    }
+
+    tabList.addEventListener('click', function(e) {
+      var tab = e.target.closest('[role="tab"]');
+      if (tab) activateTab(tab);
+    });
+
+    tabList.addEventListener('keydown', function(e) {
+      var tabsArr = Array.from(tabs);
+      var currentIdx = tabsArr.indexOf(document.activeElement);
+      if (currentIdx < 0) return;
+      var nextIdx = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        nextIdx = (currentIdx + 1) % tabsArr.length;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        nextIdx = (currentIdx - 1 + tabsArr.length) % tabsArr.length;
+      } else if (e.key === 'Home') {
+        nextIdx = 0;
+      } else if (e.key === 'End') {
+        nextIdx = tabsArr.length - 1;
+      }
+      if (nextIdx >= 0) {
+        e.preventDefault();
+        activateTab(tabsArr[nextIdx]);
+      }
+    });
+  });
+
+  /* ===== Copy Buttons ===== */
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.copy-btn');
+    if (!btn) return;
+
+    var block = btn.closest('.code-block') || btn.closest('.prompt-item');
+    if (!block) return;
+
+    var pre = block.querySelector('pre');
+    var textEl = block.querySelector('.prompt-item p');
+    var text = '';
+    if (pre) {
+      text = pre.textContent;
+    } else if (textEl) {
+      text = textEl.textContent;
+    }
+    if (!text) return;
+
+    function onCopied() {
+      btn.textContent = '已复制 ✓';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = '复制';
+        btn.classList.remove('copied');
+      }, 2000);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); onCopied(); } catch(err) { /* silent */ }
+      document.body.removeChild(ta);
+    }
+  });
+
+  /* ===== Prompt item copy — find text in sibling ===== */
+  document.querySelectorAll('.prompt-item .copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var item = btn.closest('.prompt-item');
+      var p = item ? item.querySelector('p') : null;
+      if (!p) return;
+      var text = p.textContent;
+
+      function onCopied() {
+        btn.textContent = '已复制 ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = '复制';
+          btn.classList.remove('copied');
+        }, 2000);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onCopied);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); onCopied(); } catch(err) { /* silent */ }
+        document.body.removeChild(ta);
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

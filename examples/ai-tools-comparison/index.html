@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 编程工具对比 — GitHub Copilot × Cursor × Claude Code × Windsurf</title>
+<meta name="description" content="四大 AI 编程工具全面对比与场景化选择指南">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fffbf5;--surface:#ffffff;--text:#1e293b;--text-secondary:#64748b;
+  --border:#e2e8f0;--accent:#d97706;--accent-secondary:#ea580c;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+  --mono:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none;transition:var(--transition)}
+a:hover{color:var(--accent-secondary)}
+.container{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{line-height:1.3;font-weight:700}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;padding:100px 0 80px;overflow:hidden;background:linear-gradient(135deg,#fffbf5 0%,#fff7ed 40%,#ffedd5 100%)}
+.hero::before{content:"";position:absolute;top:-120px;right:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(217,119,6,.12),transparent 70%);pointer-events:none}
+.hero::after{content:"";position:absolute;bottom:-100px;left:-60px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,.1),transparent 70%);pointer-events:none}
+.hero .container{position:relative;z-index:1;text-align:center}
+.hero-badge{display:inline-block;padding:6px 18px;border-radius:999px;background:linear-gradient(135deg,#d97706,#ea580c);color:#fff;font-size:.85rem;font-weight:600;margin-bottom:24px;letter-spacing:.02em}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);background:linear-gradient(135deg,#d97706,#ea580c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+.hero .subtitle{font-size:clamp(1rem,2.5vw,1.25rem);color:var(--text-secondary);max-width:700px;margin:0 auto 40px}
+.hero-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+.hero-stats .stat{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--surface);border:1px solid var(--border);border-radius:999px;font-size:.9rem;font-weight:500;box-shadow:var(--shadow)}
+.hero-stats .stat .num{color:var(--accent);font-weight:700}
+
+/* ---------- SECTIONS ---------- */
+section{padding:80px 0}
+section:nth-child(even){background:var(--surface)}
+.section-header{text-align:center;margin-bottom:48px}
+.section-header h2{font-size:clamp(1.5rem,4vw,2.2rem);margin-bottom:12px}
+.section-header p{color:var(--text-secondary);max-width:600px;margin:0 auto;font-size:1.05rem}
+
+/* ---------- REVEAL ANIMATION ---------- */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+
+/* ---------- TOOL CARDS (§1) ---------- */
+.tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);transition:var(--transition)}
+.tool-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.tool-card .tool-icon{font-size:2rem;margin-bottom:12px}
+.tool-card h3{font-size:1.2rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.tool-card .tool-maker{font-size:.82rem;color:var(--text-secondary);margin-bottom:10px}
+.tool-card p{font-size:.95rem;color:var(--text-secondary);line-height:1.6}
+.tool-card .tool-tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600;margin-top:12px}
+.tool-card:nth-child(1) .tool-tag{background:#dbeafe;color:#1d4ed8}
+.tool-card:nth-child(2) .tool-tag{background:#ede9fe;color:#7c3aed}
+.tool-card:nth-child(3) .tool-tag{background:#fce7f3;color:#be185d}
+.tool-card:nth-child(4) .tool-tag{background:#d1fae5;color:#059669}
+
+/* ---------- TABS (§2,§4) ---------- */
+.tabs{margin-top:8px}
+.tab-nav{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--border);padding-bottom:0;margin-bottom:24px}
+.tab-btn{padding:10px 18px;border:none;background:transparent;font-family:var(--font);font-size:.92rem;font-weight:500;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--transition);border-radius:8px 8px 0 0;white-space:nowrap}
+.tab-btn:hover{color:var(--accent);background:rgba(217,119,6,.05)}
+.tab-btn[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab-panel{display:none;animation:fadeTab .35s ease}
+.tab-panel.active{display:block}
+@keyframes fadeTab{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---------- COMPARISON TABLE ---------- */
+.cmp-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:.9rem}
+.cmp-table thead{background:linear-gradient(135deg,#fffbeb,#fff7ed)}
+.cmp-table th,.cmp-table td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp-table th{font-weight:600;font-size:.85rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em}
+.cmp-table th:first-child{color:var(--text)}
+.cmp-table tbody tr:last-child td{border-bottom:none}
+.cmp-table tbody tr:hover{background:rgba(217,119,6,.03)}
+.cmp-table .score{font-weight:600}
+.cmp-table .best{color:var(--accent);font-weight:700}
+
+/* ---------- SCENARIO CARDS (§3) ---------- */
+.scenario-list{display:flex;flex-direction:column;gap:20px}
+.scenario-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);display:flex;gap:20px;align-items:flex-start;transition:var(--transition);cursor:default}
+.scenario-card:hover{box-shadow:var(--shadow-lg)}
+.scenario-card .sc-icon{font-size:2rem;flex-shrink:0;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(135deg,#fffbeb,#ffedd5)}
+.scenario-card .sc-body{flex:1}
+.scenario-card .sc-body h3{font-size:1.1rem;margin-bottom:6px}
+.scenario-card .sc-body .sc-pick{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:999px;background:linear-gradient(135deg,#d97706,#ea580c);color:#fff;font-size:.78rem;font-weight:600;margin-bottom:8px}
+.scenario-card .sc-body .sc-alt{font-size:.82rem;color:var(--text-secondary);margin-bottom:6px}
+.scenario-card .sc-body .sc-why{font-size:.9rem;color:var(--text-secondary);line-height:1.6}
+
+/* ---------- WORKFLOW TABS (§4) ---------- */
+.workflow-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.workflow-block pre{margin:0;padding:20px 24px;background:#fafaf9;font-family:var(--mono);font-size:.88rem;line-height:1.7;overflow-x:auto;position:relative;white-space:pre-wrap;word-break:break-word}
+.workflow-block .wf-desc{padding:16px 24px;font-size:.92rem;color:var(--text-secondary);border-top:1px solid var(--border);line-height:1.6}
+
+/* ---------- CODE BLOCKS ---------- */
+.code-wrap{position:relative;margin:16px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.code-wrap pre{margin:0;padding:20px 24px;background:#fafaf9;font-family:var(--mono);font-size:.88rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.copy-btn{position:absolute;top:8px;right:8px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:.78rem;cursor:pointer;transition:var(--transition);font-family:var(--font);color:var(--text-secondary)}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{color:#16a34a;border-color:#16a34a}
+
+/* ---------- QUICK-REF (§5) ---------- */
+.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:var(--transition)}
+.quick-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.quick-card .qc-if{font-size:.88rem;color:var(--text-secondary);margin-bottom:8px}
+.quick-card .qc-then{font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.quick-card .tips{list-style:none;padding:0}
+.quick-card .tips li{position:relative;padding:6px 0 6px 20px;font-size:.9rem;color:var(--text-secondary);line-height:1.6}
+.quick-card .tips li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+
+/* ---------- SUMMARY BARS (§2 extra) ---------- */
+.summary-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.summary-row .sr-label{flex:0 0 120px;font-size:.88rem;font-weight:500;text-align:right}
+.summary-row .sr-bar-wrap{flex:1;height:24px;background:#f1f5f9;border-radius:12px;overflow:hidden;position:relative}
+.summary-row .sr-bar{height:100%;border-radius:12px;transition:width .8s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:.75rem;font-weight:700;color:#fff}
+.summary-row .sr-bar.copilot{background:linear-gradient(90deg,#3b82f6,#2563eb)}
+.summary-row .sr-bar.cursor{background:linear-gradient(90deg,#8b5cf6,#7c3aed)}
+.summary-row .sr-bar.claude{background:linear-gradient(90deg,#ec4899,#be185d)}
+.summary-row .sr-bar.windsurf{background:linear-gradient(90deg,#10b981,#059669)}
+.bar-legend{display:flex;justify-content:center;gap:24px;margin-top:20px;flex-wrap:wrap}
+.bar-legend span{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-secondary)}
+.bar-legend .dot{width:12px;height:12px;border-radius:50%}
+.bar-legend .dot.copilot{background:#2563eb}
+.bar-legend .dot.cursor{background:#7c3aed}
+.bar-legend .dot.claude{background:#be185d}
+.bar-legend .dot.windsurf{background:#059669}
+
+/* ---------- COMBO STRATEGY (§5 extra) ---------- */
+.combo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:40px}
+.combo-card{background:linear-gradient(135deg,#fffbeb,#fff7ed);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:var(--transition)}
+.combo-card:hover{box-shadow:var(--shadow-lg)}
+.combo-card h4{font-size:1rem;margin-bottom:8px;color:var(--text)}
+.combo-card .combo-tools{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.combo-card .combo-tools span{padding:4px 12px;border-radius:999px;font-size:.78rem;font-weight:600;background:var(--surface);border:1px solid var(--border)}
+.combo-card p{font-size:.9rem;color:var(--text-secondary);line-height:1.6}
+
+/* ---------- NAV DOTS ---------- */
+.page-nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:10px}
+.page-nav a{width:10px;height:10px;border-radius:50%;background:var(--border);transition:var(--transition);display:block}
+.page-nav a:hover,.page-nav a.active{background:var(--accent);transform:scale(1.3)}
+
+/* ---------- FOOTER ---------- */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 0;text-align:center;color:var(--text-secondary);font-size:.9rem}
+footer a{color:var(--accent);font-weight:600}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:1024px){
+  .tool-grid,.quick-grid,.combo-grid{grid-template-columns:repeat(2,1fr)}
+  .page-nav{display:none}
+}
+@media(max-width:768px){
+  .hero{padding:72px 0 56px}
+  section{padding:56px 0}
+  .tool-grid,.quick-grid,.combo-grid{grid-template-columns:1fr}
+  .scenario-card{flex-direction:column;gap:12px}
+  .cmp-table{font-size:.82rem}
+  .cmp-table th,.cmp-table td{padding:10px 10px}
+  .tab-btn{padding:8px 12px;font-size:.84rem}
+  .summary-row .sr-label{flex:0 0 80px;font-size:.8rem}
+}
+@media(max-width:600px){
+  .container{padding:0 16px}
+  .hero h1{font-size:clamp(1.6rem,6vw,2.4rem)}
+  .hero-stats{gap:8px}
+  .hero-stats .stat{padding:6px 12px;font-size:.82rem}
+}
+@media(max-width:480px){
+  .tab-nav{gap:4px}
+  .tab-btn{padding:6px 10px;font-size:.8rem}
+  .cmp-table th,.cmp-table td{padding:8px 6px;font-size:.78rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="container">
+    <span class="hero-badge">AI 编程最佳实践</span>
+    <h1>AI 编程工具对比</h1>
+    <p class="subtitle">GitHub Copilot × Cursor × Claude Code × Windsurf — 按场景选择最适合你的 AI 编程助手</p>
+    <div class="hero-stats">
+      <span class="stat"><span class="num">4</span> 大工具</span>
+      <span class="stat"><span class="num">6</span> 个对比维度</span>
+      <span class="stat">场景化推荐</span>
+      <span class="stat">实用 Tips</span>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== §1 四大工具简介 ==================== -->
+<section>
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>🔍 四大 AI 编程工具一览</h2>
+      <p>了解每款工具的核心定位与特色，找到最适合你的 AI 编程搭档</p>
+    </div>
+    <div class="tool-grid">
+      <div class="tool-card reveal">
+        <div class="tool-icon">🤖</div>
+        <h3>GitHub Copilot</h3>
+        <p class="tool-maker">微软 / GitHub 出品</p>
+        <p>VS Code 深度集成，行级代码补全的先驱。拥有最大规模的用户基础和最成熟的补全体验，是大多数开发者的第一款 AI 编程工具。支持多种 IDE 和编程语言。</p>
+        <span class="tool-tag">补全之王</span>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-icon">⚡</div>
+        <h3>Cursor</h3>
+        <p class="tool-maker">Cursor Inc.</p>
+        <p>AI-first IDE，基于 VS Code 深度改造。对话式编程 + 多文件编辑能力突出，Composer 模式可一次修改多个文件。率先将 AI 融入编辑器的核心交互中。</p>
+        <span class="tool-tag">IDE 新势力</span>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-icon">🧠</div>
+        <h3>Claude Code</h3>
+        <p class="tool-maker">Anthropic 出品</p>
+        <p>终端原生的 AI Agent，命令行界面，Agent 模式最强。可自主读取文件、执行命令、搜索代码库，擅长复杂的跨文件重构和自动化任务，深受高级开发者喜爱。</p>
+        <span class="tool-tag">Agent 最强</span>
+      </div>
+      <div class="tool-card reveal">
+        <div class="tool-icon">🌊</div>
+        <h3>Windsurf</h3>
+        <p class="tool-maker">Codeium 推出</p>
+        <p>自动化 Flow 模式的 AI IDE，轻量级且上手简单。免费额度慷慨，Cascade 功能支持多步骤自动执行，适合想要低成本尝试 AI 编程的开发者。</p>
+        <span class="tool-tag">轻量之选</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== §2 六维对比 ==================== -->
+<section>
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>📊 六维对比矩阵</h2>
+      <p>从 6 个关键维度全面对比四大工具的能力表现</p>
+    </div>
+    <div class="tabs reveal" id="cmpTabs">
+      <div class="tab-nav" role="tablist" aria-label="对比维度">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="cmp-0" id="cmp-tab-0">代码补全</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="cmp-1" id="cmp-tab-1">对话编程</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="cmp-2" id="cmp-tab-2">多文件编辑</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="cmp-3" id="cmp-tab-3">Agent 模式</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="cmp-4" id="cmp-tab-4">生态集成</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="cmp-5" id="cmp-tab-5">价格方案</button>
+      </div>
+
+      <!-- Tab 0: 代码补全 -->
+      <div class="tab-panel active" role="tabpanel" id="cmp-0" aria-labelledby="cmp-tab-0">
+        <table class="cmp-table">
+          <thead><tr><th>评估项</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>补全速度</td><td class="best">⭐⭐⭐⭐⭐ 极快</td><td>⭐⭐⭐⭐ 快</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 快</td></tr>
+            <tr><td>准确率</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>上下文理解</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐ 中等</td></tr>
+            <tr><td>多行补全</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>综合评分</td><td class="best score">★ 9.0</td><td class="score">★ 8.5</td><td class="score">★ 7.0</td><td class="score">★ 7.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab 1: 对话编程 -->
+      <div class="tab-panel" role="tabpanel" id="cmp-1" aria-labelledby="cmp-tab-1">
+        <table class="cmp-table">
+          <thead><tr><th>评估项</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>多轮对话</td><td>⭐⭐⭐ 中等</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>代码引用</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐ 中等</td></tr>
+            <tr><td>上下文管理</td><td>⭐⭐⭐ 中等</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>自然语言理解</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>综合评分</td><td class="score">★ 7.0</td><td class="best score">★ 9.0</td><td class="score">★ 9.0</td><td class="score">★ 7.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab 2: 多文件编辑 -->
+      <div class="tab-panel" role="tabpanel" id="cmp-2" aria-labelledby="cmp-tab-2">
+        <table class="cmp-table">
+          <thead><tr><th>评估项</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>跨文件重构</td><td>⭐⭐⭐ 中等</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>批量修改</td><td>⭐⭐ 一般</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>项目理解</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐ 中等</td></tr>
+            <tr><td>Diff 预览</td><td>⭐⭐⭐ 中等</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>综合评分</td><td class="score">★ 5.5</td><td class="best score">★ 9.5</td><td class="score">★ 9.0</td><td class="score">★ 7.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab 3: Agent 模式 -->
+      <div class="tab-panel" role="tabpanel" id="cmp-3" aria-labelledby="cmp-tab-3">
+        <table class="cmp-table">
+          <thead><tr><th>评估项</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>自主执行能力</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>工具调用</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐ 中等</td></tr>
+            <tr><td>任务完成度</td><td>⭐⭐⭐ 中等</td><td>⭐⭐⭐⭐ 良好</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐⭐ 良好</td></tr>
+            <tr><td>错误恢复</td><td>⭐⭐ 一般</td><td>⭐⭐⭐ 中等</td><td class="best">⭐⭐⭐⭐⭐ 优秀</td><td>⭐⭐⭐ 中等</td></tr>
+            <tr><td>综合评分</td><td class="score">★ 5.5</td><td class="score">★ 7.5</td><td class="best score">★ 9.5</td><td class="score">★ 7.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab 4: 生态集成 -->
+      <div class="tab-panel" role="tabpanel" id="cmp-4" aria-labelledby="cmp-tab-4">
+        <table class="cmp-table">
+          <thead><tr><th>评估项</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>IDE 支持</td><td class="best">⭐⭐⭐⭐⭐ VS Code / JetBrains / Neovim 等</td><td>⭐⭐⭐ 自有 IDE</td><td>⭐⭐⭐⭐⭐ 任意终端</td><td>⭐⭐⭐ 自有 IDE</td></tr>
+            <tr><td>语言覆盖</td><td class="best">⭐⭐⭐⭐⭐ 全语言</td><td>⭐⭐⭐⭐⭐ 全语言</td><td>⭐⭐⭐⭐⭐ 全语言</td><td>⭐⭐⭐⭐ 主流语言</td></tr>
+            <tr><td>插件生态</td><td class="best">⭐⭐⭐⭐⭐ 极丰富</td><td>⭐⭐⭐⭐ VS Code 兼容</td><td>⭐⭐⭐ MCP 工具</td><td>⭐⭐⭐ 基础</td></tr>
+            <tr><td>团队协作</td><td class="best">⭐⭐⭐⭐⭐ 企业级</td><td>⭐⭐⭐⭐ 团队版</td><td>⭐⭐⭐ 个人为主</td><td>⭐⭐⭐ 团队版</td></tr>
+            <tr><td>综合评分</td><td class="best score">★ 9.5</td><td class="score">★ 7.5</td><td class="score">★ 7.5</td><td class="score">★ 6.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab 5: 价格方案 -->
+      <div class="tab-panel" role="tabpanel" id="cmp-5" aria-labelledby="cmp-tab-5">
+        <table class="cmp-table">
+          <thead><tr><th>方案</th><th>GitHub Copilot</th><th>Cursor</th><th>Claude Code</th><th>Windsurf</th></tr></thead>
+          <tbody>
+            <tr><td>免费额度</td><td>有限免费 (2000 补全/月)</td><td>有限免费</td><td>无 (需 API Key)</td><td class="best">慷慨免费额度</td></tr>
+            <tr><td>个人版价格</td><td>$10/月</td><td>$20/月</td><td>$20/月 (Max 订阅)</td><td>$10/月</td></tr>
+            <tr><td>团队版价格</td><td>$19/人/月</td><td>$40/人/月</td><td>按 API 用量</td><td>$15/人/月</td></tr>
+            <tr><td>企业版</td><td class="best">$39/人/月 完整企业功能</td><td>定制方案</td><td>按用量</td><td>定制方案</td></tr>
+            <tr><td>性价比</td><td class="score">★ 8.5</td><td class="score">★ 7.5</td><td class="score">★ 7.0</td><td class="best score">★ 9.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Visual Summary Bars -->
+    <div class="reveal" style="margin-top:48px">
+      <h3 style="text-align:center;font-size:1.2rem;margin-bottom:24px">📈 综合实力一览</h3>
+      <div class="summary-bars">
+        <div class="summary-row">
+          <span class="sr-label">代码补全</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar copilot" style="width:90%" data-width="90">9.0</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">代码补全</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar cursor" style="width:85%" data-width="85">8.5</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">代码补全</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar claude" style="width:70%" data-width="70">7.0</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">代码补全</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar windsurf" style="width:75%" data-width="75">7.5</div>
+          </div>
+        </div>
+
+        <div class="summary-row" style="margin-top:20px">
+          <span class="sr-label">对话编程</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar copilot" style="width:70%" data-width="70">7.0</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">对话编程</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar cursor" style="width:90%" data-width="90">9.0</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">对话编程</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar claude" style="width:90%" data-width="90">9.0</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">对话编程</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar windsurf" style="width:75%" data-width="75">7.5</div>
+          </div>
+        </div>
+
+        <div class="summary-row" style="margin-top:20px">
+          <span class="sr-label">Agent 模式</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar copilot" style="width:55%" data-width="55">5.5</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">Agent 模式</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar cursor" style="width:75%" data-width="75">7.5</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">Agent 模式</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar claude" style="width:95%" data-width="95">9.5</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span class="sr-label" style="opacity:0">Agent 模式</span>
+          <div class="sr-bar-wrap">
+            <div class="sr-bar windsurf" style="width:70%" data-width="70">7.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="bar-legend">
+        <span><span class="dot copilot"></span>GitHub Copilot</span>
+        <span><span class="dot cursor"></span>Cursor</span>
+        <span><span class="dot claude"></span>Claude Code</span>
+        <span><span class="dot windsurf"></span>Windsurf</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== §3 场景化选择 ==================== -->
+<section>
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>🎯 按场景选择工具</h2>
+      <p>不同场景下各工具的表现差异明显，选对工具事半功倍</p>
+    </div>
+    <div class="scenario-list">
+
+      <div class="scenario-card reveal">
+        <div class="sc-icon">⌨️</div>
+        <div class="sc-body">
+          <h3>日常编码补全</h3>
+          <span class="sc-pick">首选 → GitHub Copilot</span>
+          <div class="sc-alt">备选：Cursor</div>
+          <p class="sc-why">Copilot 的补全响应速度最快、准确率最高，且支持几乎所有主流 IDE。日常写代码时，行级补全的流畅体验无人能出其右。Cursor 的补全也很优秀，还能在上下文理解上更进一步。</p>
+        </div>
+      </div>
+
+      <div class="scenario-card reveal">
+        <div class="sc-icon">🔧</div>
+        <div class="sc-body">
+          <h3>复杂重构</h3>
+          <span class="sc-pick">首选 → Cursor</span>
+          <div class="sc-alt">备选：Claude Code</div>
+          <p class="sc-why">Cursor 的 Composer 模式专为多文件编辑设计，可以一次性预览和应用跨多个文件的修改，Diff 预览清晰直观。Claude Code 的项目理解能力更深，适合大规模架构级重构。</p>
+        </div>
+      </div>
+
+      <div class="scenario-card reveal">
+        <div class="sc-icon">🤖</div>
+        <div class="sc-body">
+          <h3>自动化 Agent 任务</h3>
+          <span class="sc-pick">首选 → Claude Code</span>
+          <div class="sc-alt">备选：Cursor (Agent 模式)</div>
+          <p class="sc-why">Claude Code 天生就是 Agent——可以自主读取文件、执行终端命令、搜索代码库、运行测试。处理"帮我实现这个功能并确保测试通过"这类端到端任务时，完成度最高。</p>
+        </div>
+      </div>
+
+      <div class="scenario-card reveal">
+        <div class="sc-icon">🚀</div>
+        <div class="sc-body">
+          <h3>从零开始新项目</h3>
+          <span class="sc-pick">首选 → Cursor</span>
+          <div class="sc-alt">备选：Windsurf</div>
+          <p class="sc-why">Cursor 的对话式编程最适合从零搭建项目——描述需求后它能生成完整的项目结构和代码。Windsurf 的 Flow 模式也很适合快速原型，且免费额度慷慨，适合试水。</p>
+        </div>
+      </div>
+
+      <div class="scenario-card reveal">
+        <div class="sc-icon">🐛</div>
+        <div class="sc-body">
+          <h3>调试排错</h3>
+          <span class="sc-pick">首选 → Claude Code</span>
+          <div class="sc-alt">备选：Cursor</div>
+          <p class="sc-why">Claude Code 可以自主运行代码、查看报错、搜索相关文件、分析日志，形成完整的调试闭环。它的 Agent 能力让调试过程高度自动化——粘贴报错，它自己就能定位并修复问题。</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== §4 实战对比 ==================== -->
+<section>
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>💡 同一任务，四种体验</h2>
+      <p>以"给这个函数添加错误处理"为例，看看四大工具的不同工作方式</p>
+    </div>
+    <div class="tabs reveal" id="wfTabs">
+      <div class="tab-nav" role="tablist" aria-label="工具工作流">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="wf-0" id="wf-tab-0">GitHub Copilot</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="wf-1" id="wf-tab-1">Cursor</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="wf-2" id="wf-tab-2">Claude Code</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="wf-3" id="wf-tab-3">Windsurf</button>
+      </div>
+
+      <div class="tab-panel active" role="tabpanel" id="wf-0" aria-labelledby="wf-tab-0">
+        <div class="workflow-block">
+          <div class="code-wrap">
+            <button class="copy-btn" aria-label="复制代码">复制</button>
+<pre>// 步骤 1: 在 VS Code 中打开目标文件
+// 步骤 2: 选中函数代码，打开 Copilot Chat (Ctrl+I)
+// 步骤 3: 输入提示
+
+提示: "给这个函数添加 try-catch 错误处理，
+      包含参数验证和有意义的错误消息"
+
+// 步骤 4: Copilot 在内联窗口中生成修改建议
+// 步骤 5: 点击 Accept 或 Discard</pre>
+          </div>
+          <div class="wf-desc">
+            <strong>特点：</strong>内联编辑体验，改动直接在编辑器中预览。适合小范围、单文件的修改，交互速度快。但只能处理当前文件，无法同时修改关联的调用方。
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="wf-1" aria-labelledby="wf-tab-1">
+        <div class="workflow-block">
+          <div class="code-wrap">
+            <button class="copy-btn" aria-label="复制代码">复制</button>
+<pre>// 步骤 1: 在 Cursor 中打开项目
+// 步骤 2: 打开 Composer (Ctrl+Shift+I)
+// 步骤 3: @引用目标文件，输入提示
+
+提示: "@utils.ts 给 fetchData 函数添加完整的
+      错误处理，同时更新 @api.ts 中的调用方"
+
+// 步骤 4: Cursor 生成多文件 Diff 预览
+// 步骤 5: 逐个检查并 Apply 每个文件的修改</pre>
+          </div>
+          <div class="wf-desc">
+            <strong>特点：</strong>多文件 Diff 预览是核心优势——你能清晰看到每个文件的改动，逐一确认。@引用让上下文管理直观高效，Composer 模式天生为多文件任务设计。
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="wf-2" aria-labelledby="wf-tab-2">
+        <div class="workflow-block">
+          <div class="code-wrap">
+            <button class="copy-btn" aria-label="复制代码">复制</button>
+<pre># 步骤 1: 在项目根目录启动 Claude Code
+$ claude
+
+# 步骤 2: 直接描述任务
+&gt; 给 src/utils.ts 中的 fetchData 函数添加
+  完整的错误处理。包括参数验证、try-catch、
+  重试逻辑，并更新所有调用方的错误处理。
+  完成后运行测试确保没有破坏。
+
+# 步骤 3: Claude Code 自动执行
+# → 读取文件 → 分析代码 → 修改函数
+# → 查找并更新调用方 → 运行测试 → 报告结果</pre>
+          </div>
+          <div class="wf-desc">
+            <strong>特点：</strong>完全自主的 Agent 体验——描述目标后，Claude Code 自动搜索相关文件、修改代码、运行测试，形成闭环。无需手动指定文件或逐步确认，适合大规模、端到端的任务。
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="wf-3" aria-labelledby="wf-tab-3">
+        <div class="workflow-block">
+          <div class="code-wrap">
+            <button class="copy-btn" aria-label="复制代码">复制</button>
+<pre>// 步骤 1: 在 Windsurf 中打开项目
+// 步骤 2: 打开 Cascade 面板
+// 步骤 3: 输入任务描述
+
+提示: "给 fetchData 函数添加错误处理，
+      包含 try-catch 和参数验证"
+
+// 步骤 4: Cascade 自动分析并生成修改
+// 步骤 5: 在 Flow 面板中查看并接受修改</pre>
+          </div>
+          <div class="wf-desc">
+            <strong>特点：</strong>Cascade 的 Flow 模式让 AI 自动执行多步骤操作，体验介于手动和全自动之间。界面友好、上手简单，但自主能力和上下文深度不如 Cursor 和 Claude Code。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== §5 速查表 ==================== -->
+<section>
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>📋 选择速查表</h2>
+      <p>快速决策——按需求直达推荐工具，附赠每款工具的使用 Tips</p>
+    </div>
+    <div class="quick-grid">
+
+      <div class="quick-card reveal">
+        <p class="qc-if">如果你…想要<strong>最好的代码补全</strong></p>
+        <p class="qc-then">🤖 GitHub Copilot</p>
+        <ul class="tips">
+          <li>写注释来引导更好的补全建议</li>
+          <li>用 Copilot Chat 做代码解释和文档生成</li>
+          <li>打开 Copilot Labs 尝试实验性功能</li>
+        </ul>
+      </div>
+
+      <div class="quick-card reveal">
+        <p class="qc-if">如果你…需要 <strong>AI-first IDE 体验</strong></p>
+        <p class="qc-then">⚡ Cursor</p>
+        <ul class="tips">
+          <li>善用 @引用精确控制上下文范围</li>
+          <li>复杂任务用 Composer，简单修改用 Cmd+K</li>
+          <li>建立 .cursorrules 文件定制 AI 行为</li>
+        </ul>
+      </div>
+
+      <div class="quick-card reveal">
+        <p class="qc-if">如果你…偏好<strong>终端工作流</strong></p>
+        <p class="qc-then">🧠 Claude Code</p>
+        <ul class="tips">
+          <li>用 CLAUDE.md 文件定义项目规范和偏好</li>
+          <li>批量任务用 --dangerously-skip-permissions 省确认</li>
+          <li>结合 git worktree 实现安全的并行开发</li>
+        </ul>
+      </div>
+
+      <div class="quick-card reveal">
+        <p class="qc-if">如果你…想要<strong>轻量级免费方案</strong></p>
+        <p class="qc-then">🌊 Windsurf</p>
+        <ul class="tips">
+          <li>用 Cascade 多步骤模式处理复杂任务</li>
+          <li>善用免费额度做项目原型和验证</li>
+          <li>搭配其他工具使用，发挥各自优势</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Combination Strategies -->
+    <div class="reveal" style="margin-top:56px">
+      <h3 style="text-align:center;font-size:1.3rem;margin-bottom:8px">🔗 组合策略：不止用一款</h3>
+      <p style="text-align:center;color:var(--text-secondary);margin-bottom:24px;font-size:.95rem">实际开发中，组合使用往往效果最佳</p>
+      <div class="combo-grid">
+        <div class="combo-card reveal">
+          <h4>💼 全栈独立开发者</h4>
+          <div class="combo-tools">
+            <span>GitHub Copilot</span>
+            <span>Claude Code</span>
+          </div>
+          <p>日常编码用 Copilot 保持补全手感，遇到复杂重构或调试时切换到 Claude Code 处理端到端任务。两者互补，覆盖从行级补全到项目级 Agent 的全场景。</p>
+        </div>
+        <div class="combo-card reveal">
+          <h4>🏢 团队协作开发</h4>
+          <div class="combo-tools">
+            <span>Cursor</span>
+            <span>GitHub Copilot</span>
+          </div>
+          <p>主力使用 Cursor 进行功能开发和多文件编辑，同时保留 Copilot 的行级补全体验。Cursor 的 Composer 适合 PR 级别的功能开发，Copilot 填补日常编码间隙。</p>
+        </div>
+        <div class="combo-card reveal">
+          <h4>🎓 学习与探索</h4>
+          <div class="combo-tools">
+            <span>Windsurf</span>
+            <span>Cursor</span>
+          </div>
+          <p>从 Windsurf 免费版入门，体验 AI 编程的基本能力。当需要更强的多文件编辑和深度对话时，升级到 Cursor。循序渐进，按需投入。</p>
+        </div>
+        <div class="combo-card reveal">
+          <h4>⚙️ DevOps / 自动化</h4>
+          <div class="combo-tools">
+            <span>Claude Code</span>
+            <span>Cursor</span>
+          </div>
+          <p>CI/CD 脚本、基础设施代码等用 Claude Code 的终端 Agent 自动化处理。应用层代码在 Cursor IDE 中开发。终端 + IDE 双线并行，各司其职。</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== NAV DOTS ==================== -->
+<nav class="page-nav" aria-label="页面导航">
+  <a href="#" title="回到顶部" data-section="0"></a>
+  <a href="#" title="工具一览" data-section="1"></a>
+  <a href="#" title="对比矩阵" data-section="2"></a>
+  <a href="#" title="场景选择" data-section="3"></a>
+  <a href="#" title="实战对比" data-section="4"></a>
+  <a href="#" title="速查表" data-section="5"></a>
+</nav>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="container">
+    <p>AI 编程工具对比 · 选择最适合你的 AI 编程助手</p>
+    <p style="margin-top:8px;font-size:.8rem">由 <a href="#">followAI</a> 出品 · 2025</p>
+  </div>
+</footer>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+;(function(){
+  "use strict";
+
+  /* ---- Reveal on scroll ---- */
+  var reveals = document.querySelectorAll(".reveal");
+  if("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          e.target.classList.add("visible");
+          io.unobserve(e.target);
+        }
+      });
+    },{threshold:0.12,rootMargin:"0px 0px -40px 0px"});
+    reveals.forEach(function(el){io.observe(el)});
+  }else{
+    reveals.forEach(function(el){el.classList.add("visible")});
+  }
+
+  /* ---- Tab system ---- */
+  function initTabs(wrapper){
+    var nav = wrapper.querySelector(".tab-nav");
+    var btns = nav.querySelectorAll(".tab-btn");
+    var panels = wrapper.querySelectorAll(".tab-panel");
+
+    function activate(index){
+      btns.forEach(function(b,i){
+        var selected = i === index;
+        b.setAttribute("aria-selected", String(selected));
+        b.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach(function(p,i){
+        if(i === index){
+          p.classList.add("active");
+        }else{
+          p.classList.remove("active");
+        }
+      });
+    }
+
+    btns.forEach(function(btn,i){
+      btn.addEventListener("click",function(){activate(i)});
+      btn.addEventListener("keydown",function(e){
+        var dir = 0;
+        if(e.key === "ArrowRight" || e.key === "ArrowDown") dir = 1;
+        if(e.key === "ArrowLeft" || e.key === "ArrowUp") dir = -1;
+        if(dir){
+          e.preventDefault();
+          var next = (i + dir + btns.length) % btns.length;
+          activate(next);
+          btns[next].focus();
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll(".tabs").forEach(initTabs);
+
+  /* ---- Copy buttons ---- */
+  document.querySelectorAll(".copy-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var pre = btn.closest(".code-wrap").querySelector("pre");
+      var text = pre.textContent;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          showCopied(btn);
+        }).catch(function(){
+          fallbackCopy(text,btn);
+        });
+      }else{
+        fallbackCopy(text,btn);
+      }
+    });
+  });
+
+  function fallbackCopy(text,btn){
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;left:-9999px;top:-9999px;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    try{document.execCommand("copy");showCopied(btn)}catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  function showCopied(btn){
+    var orig = btn.textContent;
+    btn.textContent = "已复制 ✓";
+    btn.classList.add("copied");
+    setTimeout(function(){
+      btn.textContent = orig;
+      btn.classList.remove("copied");
+    },1800);
+  }
+
+  /* ---- Page navigation dots ---- */
+  var navDots = document.querySelectorAll(".page-nav a");
+  var allSections = document.querySelectorAll("header, section");
+  if(navDots.length && allSections.length){
+    navDots.forEach(function(dot){
+      dot.addEventListener("click",function(e){
+        e.preventDefault();
+        var idx = parseInt(dot.getAttribute("data-section"),10);
+        if(allSections[idx]){
+          allSections[idx].scrollIntoView({behavior:"smooth"});
+        }
+      });
+    });
+
+    if("IntersectionObserver" in window){
+      var secObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            var idx = Array.prototype.indexOf.call(allSections,entry.target);
+            navDots.forEach(function(d,i){
+              if(i === idx) d.classList.add("active");
+              else d.classList.remove("active");
+            });
+          }
+        });
+      },{threshold:0.3});
+      allSections.forEach(function(sec){secObs.observe(sec)});
+    }
+  }
+
+  /* ---- Animated bars on scroll ---- */
+  var bars = document.querySelectorAll(".sr-bar");
+  if(bars.length && "IntersectionObserver" in window){
+    bars.forEach(function(bar){
+      var w = bar.getAttribute("data-width");
+      bar.style.width = "0%";
+    });
+    var barObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var bar = entry.target;
+          var w = bar.getAttribute("data-width");
+          setTimeout(function(){
+            bar.style.width = w + "%";
+          },100);
+          barObs.unobserve(bar);
+        }
+      });
+    },{threshold:0.1});
+    bars.forEach(function(bar){barObs.observe(bar)});
+  }
+
+})();
+</script>
+</body>
+</html>

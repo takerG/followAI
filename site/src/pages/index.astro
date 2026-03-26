@@ -1,22 +1,171 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import Base from '../layouts/Base.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import ExampleGrid from '../components/ExampleGrid.astro';
 import type { ResolvedExample } from '../types/example';
+import type { OrderConfig } from '../types/example';
+import { groupExamples } from '../utils/group-examples';
 import allExamples from 'virtual:examples';
 
-// Sort by date descending (newest first)
-const examples = [...(allExamples as ResolvedExample[])].sort((a, b) => {
+// --- Load order.json (optional, graceful fallback) ---
+let orderConfig: OrderConfig | null = null;
+try {
+  const orderPath = path.resolve(process.cwd(), '../examples/order.json');
+  const raw = fs.readFileSync(orderPath, 'utf-8');
+  orderConfig = JSON.parse(raw);
+} catch {
+  // order.json missing or invalid — fallback to date sort
+}
+
+// Sort all by date first (for fallback)
+const sortedExamples = [...(allExamples as ResolvedExample[])].sort((a, b) => {
   if (!a.date && !b.date) return 0;
   if (!a.date) return 1;
   if (!b.date) return -1;
   return b.date.localeCompare(a.date);
 });
+
+const { featured, categories, uncategorized } = groupExamples(
+  sortedExamples,
+  orderConfig,
+);
 ---
 
 <Base>
   <SiteHeader />
+
+  <section class="hero-description">
+    <div class="hero-content">
+      <p class="hero-text">
+        每个示例都是精心制作的沉浸式网页，不是传统的文字教程。<br />
+        通过视觉化、交互式的方式，让你真正理解 AI 编程的最佳实践。
+      </p>
+    </div>
+  </section>
+
   <main>
-    <ExampleGrid examples={examples} />
+    {featured.length > 0 && (
+      <section class="example-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="category-icon">⭐</span>
+            <span class="category-title">精选推荐</span>
+            <span class="category-count">{featured.length}篇</span>
+          </h2>
+        </div>
+        <ExampleGrid examples={featured} />
+      </section>
+    )}
+
+    {categories.map((cat) => (
+      <section class="example-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="category-icon">{cat.icon}</span>
+            <span class="category-title">{cat.title}</span>
+            <span class="category-count">{cat.examples.length}篇</span>
+          </h2>
+        </div>
+        <ExampleGrid examples={cat.examples} />
+      </section>
+    ))}
+
+    {uncategorized.length > 0 && (
+      <section class="example-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="category-icon">📂</span>
+            <span class="category-title">更多内容</span>
+            <span class="category-count">{uncategorized.length}篇</span>
+          </h2>
+        </div>
+        <ExampleGrid examples={uncategorized} />
+      </section>
+    )}
+
+    {featured.length === 0 && categories.length === 0 && uncategorized.length === 0 && (
+      <ExampleGrid examples={[]} />
+    )}
   </main>
 </Base>
+
+<style>
+  .hero-description {
+    text-align: center;
+    padding: 0 24px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-content {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .hero-text {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  .example-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .section-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 0 16px;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .category-icon {
+    font-size: 1.2rem;
+  }
+
+  .category-title {
+    flex: none;
+  }
+
+  .category-count {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #999;
+    background: #f0f0f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .hero-description {
+      padding: 0 16px 24px;
+    }
+
+    .hero-text {
+      font-size: 0.875rem;
+    }
+
+    .example-section {
+      padding: 0 16px;
+    }
+
+    .section-header {
+      padding: 16px 0 12px;
+      margin-bottom: 16px;
+    }
+  }
+</style>

@@ -1,0 +1,40 @@
+{
+  "featured": [
+    "gstack-best-practices",
+    "claude-code-workflow",
+    "mcp-development",
+    "ai-agent-patterns"
+  ],
+  "categories": [
+    {
+      "title": "入门基础",
+      "icon": "🚀",
+      "items": [
+        "claude-code-workflow",
+        "cursor-tips",
+        "prompt-engineering",
+        "ai-tools-comparison"
+      ]
+    },
+    {
+      "title": "进阶实践",
+      "icon": "⚡",
+      "items": [
+        "tdd-with-ai",
+        "git-worktree-patterns",
+        "gstack-best-practices",
+        "mcp-development",
+        "ai-agent-patterns"
+      ]
+    },
+    {
+      "title": "工具与方法",
+      "icon": "🛠️",
+      "items": [
+        "ai-refactoring",
+        "ai-documentation",
+        "ai-architecture"
+      ]
+    }
+  ]
+}

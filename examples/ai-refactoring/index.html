@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 辅助重构实战 — 系统性消除技术债务</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff5f7;--surface:#ffffff;--text:#1e293b;--text-secondary:#64748b;
+  --border:#e2e8f0;--accent:#e11d48;--accent-secondary:#be185d;
+  --accent-light:rgba(225,29,72,.08);--accent-glow:rgba(225,29,72,.12);
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 30px rgba(0,0,0,.1);
+  --green:#22c55e;--green-light:rgba(34,197,94,.08);
+  --red-light:rgba(239,68,68,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:"SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:.88em;background:var(--accent-light);padding:2px 6px;border-radius:4px}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* ── Reveal ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+@media(scripting:none){.reveal{opacity:1;transform:none}}
+
+/* ── Hero ── */
+.hero{position:relative;padding:100px 0 80px;text-align:center;
+  background:linear-gradient(135deg,#fff5f7 0%,#fce7f3 50%,#fff1f2 100%);overflow:hidden}
+.hero::before{content:"";position:absolute;top:-120px;right:-80px;width:400px;height:400px;
+  border-radius:50%;background:rgba(225,29,72,.07)}
+.hero::after{content:"";position:absolute;bottom:-100px;left:-60px;width:300px;height:300px;
+  border-radius:50%;background:rgba(190,24,93,.06)}
+.hero-badge{display:inline-block;padding:6px 18px;border-radius:20px;font-size:14px;
+  font-weight:600;background:linear-gradient(135deg,var(--accent),var(--accent-secondary));
+  color:#fff;margin-bottom:24px;letter-spacing:.5px}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-secondary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p.subtitle{font-size:1.15rem;color:var(--text-secondary);max-width:640px;margin:0 auto 40px}
+.hero-stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat .num{display:block;font-size:2rem;font-weight:800;color:var(--text)}
+.hero-stat .label{font-size:.85rem;color:var(--text-secondary)}
+
+/* ── Section ── */
+section{padding:80px 0}
+.section-title{text-align:center;margin-bottom:12px;font-size:clamp(1.5rem,3.5vw,2rem);font-weight:700}
+.section-subtitle{text-align:center;color:var(--text-secondary);margin-bottom:48px;font-size:1rem;
+  max-width:640px;margin-left:auto;margin-right:auto}
+
+/* ── Benefit Cards ── */
+.benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.benefit-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;box-shadow:var(--shadow);transition:box-shadow .3s,transform .3s}
+.benefit-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.benefit-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:1.4rem;background:var(--accent-light);margin-bottom:16px}
+.benefit-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.benefit-card p{color:var(--text-secondary);font-size:.92rem;line-height:1.7}
+
+/* ── Tabs ── */
+.tab-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow-lg)}
+.tab-nav{display:flex;gap:0;overflow-x:auto;background:var(--bg);
+  border-bottom:1px solid var(--border);scrollbar-width:thin}
+.tab-btn{padding:12px 20px;border:none;background:transparent;cursor:pointer;font-size:.85rem;
+  font-weight:600;color:var(--text-secondary);white-space:nowrap;transition:all .2s;
+  border-bottom:2px solid transparent;font-family:inherit}
+.tab-btn:hover{color:var(--accent);background:var(--accent-light)}
+.tab-btn[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);
+  background:var(--surface)}
+.tab-panel{display:none;padding:28px 24px}
+.tab-panel.active{display:block}
+.tab-panel h4{font-size:1.1rem;margin-bottom:6px}
+.tab-panel .tab-desc{color:var(--text-secondary);margin-bottom:20px;line-height:1.7;font-size:.95rem}
+
+/* ── Code Blocks ── */
+.code-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.code-block{border-radius:8px;overflow:hidden}
+.code-header{padding:8px 14px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.code-header.before{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-bottom:none;
+  border-radius:8px 8px 0 0}
+.code-header.after{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-bottom:none;
+  border-radius:8px 8px 0 0}
+.code-pre{background:#1e293b;color:#e2e8f0;padding:18px;font-family:"SF Mono",SFMono-Regular,
+  Consolas,"Liberation Mono",Menlo,monospace;font-size:.82rem;line-height:1.8;overflow-x:auto;
+  white-space:pre;tab-size:2;margin:0;border-radius:0 0 8px 8px}
+.code-pre .kw{color:#c084fc}
+.code-pre .fn{color:#60a5fa}
+.code-pre .str{color:#86efac}
+.code-pre .cm{color:#64748b}
+.code-pre .num{color:#fbbf24}
+.code-pre .type{color:#f472b6}
+.code-pre .op{color:#94a3b8}
+.code-pre .err{color:#fca5a5}
+.code-pre .ok{color:#86efac}
+
+/* ── Prompt Block ── */
+.prompt-block{position:relative;background:#f8fafc;border:1px solid var(--border);
+  border-radius:8px;padding:14px 48px 14px 14px;margin-bottom:12px;font-size:.88rem;
+  line-height:1.7;white-space:pre-wrap;word-break:break-all;color:var(--text)}
+.prompt-block:last-child{margin-bottom:0}
+.copy-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border:none;
+  border-radius:6px;background:var(--surface);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:var(--text-secondary);box-shadow:var(--shadow);
+  transition:background .2s,color .2s;font-family:inherit}
+.copy-btn:hover{background:var(--accent);color:#fff}
+.copy-btn.copied{background:var(--green);color:#fff}
+.prompt-label{font-size:.8rem;font-weight:600;color:var(--accent);margin-bottom:8px;
+  display:flex;align-items:center;gap:4px}
+
+/* ── CLEAN Framework ── */
+.clean-section{background:var(--surface)}
+.clean-grid{display:grid;gap:16px}
+.clean-card{display:grid;grid-template-columns:64px 1fr;gap:20px;padding:24px;
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;transition:all .3s}
+.clean-card:hover{box-shadow:var(--shadow-lg);border-color:var(--accent)}
+.clean-card.expanded{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.clean-letter{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:1.6rem;font-weight:800;color:#fff;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent-secondary))}
+.clean-content h3{font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.clean-content .clean-subtitle{font-size:.85rem;color:var(--accent);font-weight:600;margin-bottom:6px}
+.clean-content p{color:var(--text-secondary);font-size:.92rem;line-height:1.7}
+.clean-detail{display:none;grid-column:1/-1;margin-top:12px}
+.clean-card.expanded .clean-detail{display:block}
+
+/* ── Walkthrough ── */
+.walk-section{background:var(--surface)}
+.walk-container{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow-lg)}
+.walk-header{display:flex;align-items:center;gap:12px;padding:16px 24px;
+  background:linear-gradient(135deg,#1e293b,#334155);color:#fff;font-size:.9rem}
+.walk-header .dot{width:12px;height:12px;border-radius:50%}
+.walk-steps{display:flex;gap:4px;padding:16px 24px;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-wrap:wrap}
+.walk-step-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);font-size:.82rem;cursor:pointer;font-weight:500;
+  transition:all .2s;color:var(--text-secondary);font-family:inherit}
+.walk-step-btn:hover{border-color:var(--accent)}
+.walk-step-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.walk-body{padding:28px 24px;min-height:340px}
+.walk-body h4{font-size:1.15rem;margin-bottom:12px}
+.walk-body>p{color:var(--text-secondary);margin-bottom:16px;line-height:1.8}
+.walk-nav{display:flex;justify-content:space-between;padding:16px 24px;
+  border-top:1px solid var(--border);background:var(--surface)}
+.walk-nav button{padding:8px 20px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);cursor:pointer;font-weight:600;font-size:.88rem;color:var(--text);
+  transition:all .2s;font-family:inherit}
+.walk-nav button:hover:not(:disabled){background:var(--accent);color:#fff;border-color:var(--accent)}
+.walk-nav button:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── Do/Don't Grid ── */
+.dodont-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px}
+.dodont-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow)}
+.dodont-col.do-col{border-top:3px solid var(--green)}
+.dodont-col.dont-col{border-top:3px solid var(--accent)}
+.dodont-header{font-size:1.05rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.dodont-header.do-header{color:#16a34a}
+.dodont-header.dont-header{color:var(--accent)}
+.dodont-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:.92rem;
+  color:var(--text-secondary);line-height:1.6;display:flex;align-items:flex-start;gap:8px}
+.dodont-item:last-child{border-bottom:none}
+.dodont-item .icon{flex-shrink:0;margin-top:2px}
+
+/* ── Quick Prompts ── */
+.quick-prompts{display:grid;gap:12px}
+.quick-prompt{position:relative;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:14px 48px 14px 14px;font-size:.88rem;line-height:1.7;
+  white-space:pre-wrap;word-break:break-all;color:var(--text);transition:border-color .2s}
+.quick-prompt:hover{border-color:var(--accent)}
+.quick-prompt .prompt-title{font-weight:700;color:var(--accent);font-size:.82rem;
+  margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Footer ── */
+footer{text-align:center;padding:40px 0;color:var(--text-secondary);font-size:.85rem;
+  border-top:1px solid var(--border)}
+footer a{color:var(--accent);font-weight:600}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .hero{padding:60px 0 50px}
+  .hero-stats{gap:24px}
+  section{padding:60px 0}
+  .code-compare{grid-template-columns:1fr}
+  .dodont-grid{grid-template-columns:1fr}
+  .tab-btn{padding:10px 14px;font-size:.8rem}
+  .walk-body{padding:20px 16px}
+  .clean-card{grid-template-columns:48px 1fr;gap:14px;padding:18px}
+  .clean-letter{width:48px;height:48px;font-size:1.2rem;border-radius:10px}
+}
+@media(max-width:600px){
+  .benefits-grid{grid-template-columns:1fr}
+  .tab-nav{gap:0}
+  .tab-btn{padding:8px 12px;font-size:.78rem}
+  .walk-steps{gap:3px}
+  .walk-step-btn{padding:5px 10px;font-size:.78rem}
+}
+@media(max-width:480px){
+  .container{padding:0 16px}
+  .hero h1{font-size:1.6rem}
+  .hero p.subtitle{font-size:1rem}
+  .hero-stats{gap:16px}
+  .hero-stat .num{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ Hero ══════════ -->
+<section class="hero">
+  <div class="container">
+    <span class="hero-badge">AI 编程最佳实践</span>
+    <h1>AI 辅助重构实战</h1>
+    <p class="subtitle">用 AI 系统性地改善代码结构、消除技术债 — 6 种重构手法 + 精准 Prompt 模板</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="num">6</span><span class="label">种重构手法</span></div>
+      <div class="hero-stat"><span class="num">CLEAN</span><span class="label">框架</span></div>
+      <div class="hero-stat"><span class="num">B/A</span><span class="label">Before/After 对比</span></div>
+      <div class="hero-stat"><span class="num">5+</span><span class="label">即用 Prompt</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ §1: 什么是 AI 辅助重构 ══════════ -->
+<section class="reveal">
+  <div class="container">
+    <h2 class="section-title">🔍 什么是 AI 辅助重构？</h2>
+    <p class="section-subtitle">借助 AI 的代码理解能力，系统性地改善现有代码结构而不改变外部行为。</p>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="benefit-icon">🎯</div>
+        <h3>精准识别</h3>
+        <p>AI 能快速发现代码异味、重复逻辑和复杂度过高的函数，省去人工逐行审查的时间。</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">⚡</div>
+        <h3>高效执行</h3>
+        <p>一条 Prompt 完成原本需要数小时的重构工作，让你专注于架构决策而非机械操作。</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🛡️</div>
+        <h3>安全保障</h3>
+        <p>AI 可以同时考虑所有调用点，减少重构引入的回归风险，保证行为不变。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ §2: 6 种核心重构手法 ══════════ -->
+<section class="reveal" style="background:var(--surface)">
+  <div class="container">
+    <h2 class="section-title">🚀 6 种核心重构手法</h2>
+    <p class="section-subtitle">每种手法都配有 Before/After 对比和 AI Prompt，直接复制使用。</p>
+
+    <div class="tab-group">
+      <div class="tab-nav" role="tablist" aria-label="重构手法">
+        <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-0" id="tabbtn-0" onclick="switchTab(0)">① 提取函数</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-1" id="tabbtn-1" onclick="switchTab(1)">② 消除重复</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-2" id="tabbtn-2" onclick="switchTab(2)">③ 简化条件</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-3" id="tabbtn-3" onclick="switchTab(3)">④ 优化类型</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-4" id="tabbtn-4" onclick="switchTab(4)">⑤ 重命名优化</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-5" id="tabbtn-5" onclick="switchTab(5)">⑥ 拆分模块</button>
+      </div>
+
+      <!-- Tab 0: 提取函数 -->
+      <div class="tab-panel active" role="tabpanel" id="tab-0" aria-labelledby="tabbtn-0">
+        <h4>提取函数 (Extract Function)</h4>
+        <p class="tab-desc">将长函数中的逻辑块提取为独立函数，每个函数只做一件事。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">processOrder</span>(order) {
+  <span class="cm">// 验证订单</span>
+  <span class="kw">if</span> (!order.items || order.items.length === <span class="num">0</span>) {
+    <span class="kw">throw new</span> Error(<span class="str">'订单不能为空'</span>)
+  }
+  <span class="kw">if</span> (!order.userId) {
+    <span class="kw">throw new</span> Error(<span class="str">'缺少用户ID'</span>)
+  }
+  <span class="cm">// 计算总价</span>
+  <span class="kw">let</span> total = <span class="num">0</span>
+  <span class="kw">for</span> (<span class="kw">const</span> item <span class="kw">of</span> order.items) {
+    total += item.price * item.qty
+  }
+  <span class="kw">if</span> (order.coupon) {
+    total *= <span class="num">0.9</span>
+  }
+  <span class="cm">// 创建记录</span>
+  <span class="kw">return</span> { id: <span class="fn">genId</span>(), total, status: <span class="str">'pending'</span> }
+}</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">validateOrder</span>(order) {
+  <span class="kw">if</span> (!order.items?.length)
+    <span class="kw">throw new</span> Error(<span class="str">'订单不能为空'</span>)
+  <span class="kw">if</span> (!order.userId)
+    <span class="kw">throw new</span> Error(<span class="str">'缺少用户ID'</span>)
+}
+
+<span class="kw">function</span> <span class="fn">calcTotal</span>(items, coupon) {
+  <span class="kw">const</span> subtotal = items.<span class="fn">reduce</span>(
+    (sum, i) => sum + i.price * i.qty, <span class="num">0</span>
+  )
+  <span class="kw">return</span> coupon ? subtotal * <span class="num">0.9</span> : subtotal
+}
+
+<span class="kw">function</span> <span class="fn">processOrder</span>(order) {
+  <span class="fn">validateOrder</span>(order)
+  <span class="kw">const</span> total = <span class="fn">calcTotal</span>(order.items, order.coupon)
+  <span class="kw">return</span> { id: <span class="fn">genId</span>(), total, status: <span class="str">'pending'</span> }
+}</pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp0">将这个 processOrder 函数拆分为多个小函数，每个函数只负责一件事（验证、计算、创建记录）。保持原有行为不变。<button class="copy-btn" onclick="copyText('tp0')" title="复制">📋</button></div>
+      </div>
+
+      <!-- Tab 1: 消除重复 -->
+      <div class="tab-panel" role="tabpanel" id="tab-1" aria-labelledby="tabbtn-1">
+        <h4>消除重复 (Remove Duplication)</h4>
+        <p class="tab-desc">合并相似代码为共享函数，避免散弹式修改。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">formatUserName</span>(user) {
+  <span class="kw">const</span> name = user.name.<span class="fn">trim</span>()
+  <span class="kw">return</span> name.<span class="fn">charAt</span>(<span class="num">0</span>).<span class="fn">toUpperCase</span>()
+    + name.<span class="fn">slice</span>(<span class="num">1</span>).<span class="fn">toLowerCase</span>()
+}
+
+<span class="kw">function</span> <span class="fn">formatCityName</span>(city) {
+  <span class="kw">const</span> name = city.name.<span class="fn">trim</span>()
+  <span class="kw">return</span> name.<span class="fn">charAt</span>(<span class="num">0</span>).<span class="fn">toUpperCase</span>()
+    + name.<span class="fn">slice</span>(<span class="num">1</span>).<span class="fn">toLowerCase</span>()
+}
+
+<span class="kw">function</span> <span class="fn">formatProductTitle</span>(product) {
+  <span class="kw">const</span> name = product.title.<span class="fn">trim</span>()
+  <span class="kw">return</span> name.<span class="fn">charAt</span>(<span class="num">0</span>).<span class="fn">toUpperCase</span>()
+    + name.<span class="fn">slice</span>(<span class="num">1</span>).<span class="fn">toLowerCase</span>()
+}</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">capitalize</span>(str: <span class="kw">string</span>): <span class="kw">string</span> {
+  <span class="kw">const</span> s = str.<span class="fn">trim</span>()
+  <span class="kw">return</span> s.<span class="fn">charAt</span>(<span class="num">0</span>).<span class="fn">toUpperCase</span>()
+    + s.<span class="fn">slice</span>(<span class="num">1</span>).<span class="fn">toLowerCase</span>()
+}
+
+<span class="kw">const</span> <span class="fn">formatUserName</span>    = (u) => <span class="fn">capitalize</span>(u.name)
+<span class="kw">const</span> <span class="fn">formatCityName</span>    = (c) => <span class="fn">capitalize</span>(c.name)
+<span class="kw">const</span> <span class="fn">formatProductTitle</span> = (p) => <span class="fn">capitalize</span>(p.title)</pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp1">找出这三个函数中的重复逻辑，提取为一个通用的工具函数，然后让原函数调用它。<button class="copy-btn" onclick="copyText('tp1')" title="复制">📋</button></div>
+      </div>
+
+      <!-- Tab 2: 简化条件 -->
+      <div class="tab-panel" role="tabpanel" id="tab-2" aria-labelledby="tabbtn-2">
+        <h4>简化条件 (Simplify Conditionals)</h4>
+        <p class="tab-desc">用 early return / 策略模式替代嵌套 if-else，降低认知复杂度。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">getDiscount</span>(user) {
+  <span class="kw">let</span> discount = <span class="num">0</span>
+  <span class="kw">if</span> (user) {
+    <span class="kw">if</span> (user.isVip) {
+      <span class="kw">if</span> (user.years > <span class="num">5</span>) {
+        discount = <span class="num">0.3</span>
+      } <span class="kw">else if</span> (user.years > <span class="num">2</span>) {
+        discount = <span class="num">0.2</span>
+      } <span class="kw">else</span> {
+        discount = <span class="num">0.1</span>
+      }
+    } <span class="kw">else</span> {
+      <span class="kw">if</span> (user.orders > <span class="num">10</span>) {
+        discount = <span class="num">0.05</span>
+      }
+    }
+  }
+  <span class="kw">return</span> discount
+}</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">getDiscount</span>(user) {
+  <span class="kw">if</span> (!user) <span class="kw">return</span> <span class="num">0</span>
+
+  <span class="kw">if</span> (!user.isVip) {
+    <span class="kw">return</span> user.orders > <span class="num">10</span> ? <span class="num">0.05</span> : <span class="num">0</span>
+  }
+
+  <span class="kw">if</span> (user.years > <span class="num">5</span>) <span class="kw">return</span> <span class="num">0.3</span>
+  <span class="kw">if</span> (user.years > <span class="num">2</span>) <span class="kw">return</span> <span class="num">0.2</span>
+  <span class="kw">return</span> <span class="num">0.1</span>
+}</pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp2">用 early return 模式重构这个嵌套 if-else，减少缩进层级，让逻辑更清晰。保持所有分支的返回值不变。<button class="copy-btn" onclick="copyText('tp2')" title="复制">📋</button></div>
+      </div>
+
+      <!-- Tab 3: 优化类型 -->
+      <div class="tab-panel" role="tabpanel" id="tab-3" aria-labelledby="tabbtn-3">
+        <h4>优化类型 (Improve Types)</h4>
+        <p class="tab-desc">用 TypeScript 类型替代 any、增加类型守卫，让编译器帮你捕获错误。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">handleEvent</span>(event: <span class="type">any</span>) {
+  <span class="kw">if</span> (event.type === <span class="str">'click'</span>) {
+    <span class="fn">doClick</span>(event.x, event.y)
+  } <span class="kw">else if</span> (event.type === <span class="str">'key'</span>) {
+    <span class="fn">doKey</span>(event.key)
+  } <span class="kw">else</span> {
+    <span class="fn">doOther</span>(event.data)
+  }
+}
+
+<span class="kw">function</span> <span class="fn">getConfig</span>(): <span class="type">any</span> {
+  <span class="kw">return</span> { retries: <span class="num">3</span>, timeout: <span class="num">5000</span> }
+}</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后</div>
+            <pre class="code-pre"><span class="kw">type</span> <span class="type">AppEvent</span> =
+  | { type: <span class="str">'click'</span>; x: <span class="type">number</span>; y: <span class="type">number</span> }
+  | { type: <span class="str">'key'</span>;   key: <span class="type">string</span> }
+  | { type: <span class="str">'other'</span>; data: <span class="type">unknown</span> }
+
+<span class="kw">function</span> <span class="fn">handleEvent</span>(event: <span class="type">AppEvent</span>) {
+  <span class="kw">switch</span> (event.type) {
+    <span class="kw">case</span> <span class="str">'click'</span>: <span class="kw">return</span> <span class="fn">doClick</span>(event.x, event.y)
+    <span class="kw">case</span> <span class="str">'key'</span>:   <span class="kw">return</span> <span class="fn">doKey</span>(event.key)
+    <span class="kw">case</span> <span class="str">'other'</span>: <span class="kw">return</span> <span class="fn">doOther</span>(event.data)
+  }
+}
+
+<span class="kw">interface</span> <span class="type">AppConfig</span> {
+  retries: <span class="type">number</span>
+  timeout: <span class="type">number</span>
+}
+<span class="kw">function</span> <span class="fn">getConfig</span>(): <span class="type">AppConfig</span> {
+  <span class="kw">return</span> { retries: <span class="num">3</span>, timeout: <span class="num">5000</span> }
+}</pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp3">消除这段代码中所有的 any 类型。为 event 创建可辨识联合类型（discriminated union），为 config 创建接口。确保类型安全。<button class="copy-btn" onclick="copyText('tp3')" title="复制">📋</button></div>
+      </div>
+
+      <!-- Tab 4: 重命名优化 -->
+      <div class="tab-panel" role="tabpanel" id="tab-4" aria-labelledby="tabbtn-4">
+        <h4>重命名优化 (Rename for Clarity)</h4>
+        <p class="tab-desc">让变量名、函数名更具表达力，代码即文档。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">proc</span>(d, f) {
+  <span class="kw">const</span> r = []
+  <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; d.length; i++) {
+    <span class="kw">const</span> tmp = <span class="fn">f</span>(d[i])
+    <span class="kw">if</span> (tmp !== <span class="kw">null</span>) {
+      r.<span class="fn">push</span>(tmp)
+    }
+  }
+  <span class="kw">return</span> r
+}
+
+<span class="kw">const</span> x = <span class="fn">proc</span>(users, (u) => {
+  <span class="kw">return</span> u.age >= <span class="num">18</span> ? u.name : <span class="kw">null</span>
+})</pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后</div>
+            <pre class="code-pre"><span class="kw">function</span> <span class="fn">filterMap</span>&lt;<span class="type">T</span>, <span class="type">R</span>&gt;(
+  items: <span class="type">T</span>[],
+  transform: (item: <span class="type">T</span>) => <span class="type">R</span> | <span class="kw">null</span>
+): <span class="type">R</span>[] {
+  <span class="kw">const</span> results: <span class="type">R</span>[] = []
+  <span class="kw">for</span> (<span class="kw">const</span> item <span class="kw">of</span> items) {
+    <span class="kw">const</span> transformed = <span class="fn">transform</span>(item)
+    <span class="kw">if</span> (transformed !== <span class="kw">null</span>) {
+      results.<span class="fn">push</span>(transformed)
+    }
+  }
+  <span class="kw">return</span> results
+}
+
+<span class="kw">const</span> adultNames = <span class="fn">filterMap</span>(users, (user) =>
+  user.age >= <span class="num">18</span> ? user.name : <span class="kw">null</span>
+)</pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp4">重命名这段代码中所有不清晰的变量名和函数名，使其能清晰表达意图。用英文命名，遵循 camelCase 规范。添加泛型类型。<button class="copy-btn" onclick="copyText('tp4')" title="复制">📋</button></div>
+      </div>
+
+      <!-- Tab 5: 拆分模块 -->
+      <div class="tab-panel" role="tabpanel" id="tab-5" aria-labelledby="tabbtn-5">
+        <h4>拆分模块 (Split Module)</h4>
+        <p class="tab-desc">将大文件按职责拆分为独立模块，每个模块关注单一领域。</p>
+        <div class="code-compare">
+          <div class="code-block">
+            <div class="code-header before">❌ 重构前 — utils.ts (500+ 行)</div>
+            <pre class="code-pre"><span class="cm">// utils.ts — 什么都往里塞</span>
+<span class="kw">export function</span> <span class="fn">formatDate</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">parseDate</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">validateEmail</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">validatePhone</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">slugify</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">truncate</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">debounce</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">throttle</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">deepClone</span>(...) { ... }
+<span class="kw">export function</span> <span class="fn">mergeObjects</span>(...) { ... }
+<span class="cm">// ... 还有 30 多个函数</span></pre>
+          </div>
+          <div class="code-block">
+            <div class="code-header after">✅ 重构后 — 按职责拆分</div>
+            <pre class="code-pre"><span class="cm">// utils/date.ts</span>
+<span class="kw">export</span> { <span class="fn">formatDate</span>, <span class="fn">parseDate</span> }
+
+<span class="cm">// utils/validation.ts</span>
+<span class="kw">export</span> { <span class="fn">validateEmail</span>, <span class="fn">validatePhone</span> }
+
+<span class="cm">// utils/string.ts</span>
+<span class="kw">export</span> { <span class="fn">slugify</span>, <span class="fn">truncate</span> }
+
+<span class="cm">// utils/async.ts</span>
+<span class="kw">export</span> { <span class="fn">debounce</span>, <span class="fn">throttle</span> }
+
+<span class="cm">// utils/object.ts</span>
+<span class="kw">export</span> { <span class="fn">deepClone</span>, <span class="fn">mergeObjects</span> }
+
+<span class="cm">// utils/index.ts — 统一导出</span>
+<span class="kw">export</span> * <span class="kw">from</span> <span class="str">'./date'</span>
+<span class="kw">export</span> * <span class="kw">from</span> <span class="str">'./validation'</span>
+<span class="kw">export</span> * <span class="kw">from</span> <span class="str">'./string'</span>
+<span class="kw">export</span> * <span class="kw">from</span> <span class="str">'./async'</span>
+<span class="kw">export</span> * <span class="kw">from</span> <span class="str">'./object'</span></pre>
+          </div>
+        </div>
+        <div class="prompt-label">🤖 AI Prompt</div>
+        <div class="prompt-block" id="tp5">将 utils.ts 按职责拆分为独立模块（date、validation、string、async、object）。创建 index.ts 统一导出，确保现有 import 路径仍然兼容。<button class="copy-btn" onclick="copyText('tp5')" title="复制">📋</button></div>
+      </div>
+
+    </div><!-- /tab-group -->
+  </div>
+</section>
+
+<!-- ══════════ §3: CLEAN 框架 ══════════ -->
+<section class="clean-section reveal">
+  <div class="container">
+    <h2 class="section-title">🛠️ CLEAN 框架：系统化重构方法</h2>
+    <p class="section-subtitle">按照 C → L → E → A → N 五步走，让重构有章可循、有迹可查。</p>
+    <div class="clean-grid" id="cleanGrid">
+
+      <div class="clean-card" onclick="toggleClean(this)">
+        <div class="clean-letter">C</div>
+        <div class="clean-content">
+          <div class="clean-subtitle">Consolidate · 合并</div>
+          <h3>找出重复逻辑并整合</h3>
+          <p>扫描代码库，识别相似的函数、重复的模式，将它们合并为共享的工具函数。</p>
+        </div>
+        <div class="clean-detail">
+          <div class="prompt-block" id="clean0">扫描这个文件，找出所有重复或相似的代码片段，列出每处重复的位置和可以合并的建议方案。<button class="copy-btn" onclick="event.stopPropagation();copyText('clean0')" title="复制">📋</button></div>
+        </div>
+      </div>
+
+      <div class="clean-card" onclick="toggleClean(this)">
+        <div class="clean-letter">L</div>
+        <div class="clean-content">
+          <div class="clean-subtitle">Lift · 提升</div>
+          <h3>提取通用逻辑到更高层级</h3>
+          <p>将嵌套在组件/模块内部的通用逻辑提升为可复用的公共模块。</p>
+        </div>
+        <div class="clean-detail">
+          <div class="prompt-block" id="clean1">找出这些组件中重复使用的逻辑，将其提取为自定义 Hook 或公共模块，放到 utils/ 或 hooks/ 目录下。<button class="copy-btn" onclick="event.stopPropagation();copyText('clean1')" title="复制">📋</button></div>
+        </div>
+      </div>
+
+      <div class="clean-card" onclick="toggleClean(this)">
+        <div class="clean-letter">E</div>
+        <div class="clean-content">
+          <div class="clean-subtitle">Extract · 提取</div>
+          <h3>将复杂函数拆分为小函数</h3>
+          <p>超过 20 行的函数考虑拆分，每个函数只负责一个清晰的职责。</p>
+        </div>
+        <div class="clean-detail">
+          <div class="prompt-block" id="clean2">这个函数超过 50 行且包含多个职责。将其拆分为多个小函数，每个函数名清晰表达其职责。保持原有行为不变。<button class="copy-btn" onclick="event.stopPropagation();copyText('clean2')" title="复制">📋</button></div>
+        </div>
+      </div>
+
+      <div class="clean-card" onclick="toggleClean(this)">
+        <div class="clean-letter">A</div>
+        <div class="clean-content">
+          <div class="clean-subtitle">Align · 对齐</div>
+          <h3>统一代码风格和命名规范</h3>
+          <p>确保整个代码库使用一致的命名风格、错误处理模式和代码组织方式。</p>
+        </div>
+        <div class="clean-detail">
+          <div class="prompt-block" id="clean3">审查这个目录下的所有文件，找出命名风格不一致的地方（如混用 camelCase 和 snake_case），并统一为 camelCase。<button class="copy-btn" onclick="event.stopPropagation();copyText('clean3')" title="复制">📋</button></div>
+        </div>
+      </div>
+
+      <div class="clean-card" onclick="toggleClean(this)">
+        <div class="clean-letter">N</div>
+        <div class="clean-content">
+          <div class="clean-subtitle">Name · 命名</div>
+          <h3>用清晰的名称传达意图</h3>
+          <p>好的命名胜过注释。让每个变量名、函数名、类名都能立刻传达其用途。</p>
+        </div>
+        <div class="clean-detail">
+          <div class="prompt-block" id="clean4">审查这段代码中所有变量和函数的命名。找出含糊或误导性的名称，给出更能表达意图的替代名称和重命名理由。<button class="copy-btn" onclick="event.stopPropagation();copyText('clean4')" title="复制">📋</button></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ §4: 实战案例 ══════════ -->
+<section class="walk-section reveal">
+  <div class="container">
+    <h2 class="section-title">💡 完整重构实战：用户服务模块</h2>
+    <p class="section-subtitle">跟随 5 步重构流程，将一个混乱的用户服务模块重构为清晰、可维护的代码。</p>
+    <div class="walk-container">
+      <div class="walk-header">
+        <span class="dot" style="background:var(--accent)"></span>
+        <span class="dot" style="background:#f59e0b"></span>
+        <span class="dot" style="background:var(--green)"></span>
+        <span>user-service.ts — 重构实战</span>
+      </div>
+      <div class="walk-steps" id="walkSteps">
+        <button class="walk-step-btn active" onclick="goStep(0)">1. 分析代码</button>
+        <button class="walk-step-btn" onclick="goStep(1)">2. 提取函数</button>
+        <button class="walk-step-btn" onclick="goStep(2)">3. 简化条件</button>
+        <button class="walk-step-btn" onclick="goStep(3)">4. 添加类型</button>
+        <button class="walk-step-btn" onclick="goStep(4)">5. 最终结果</button>
+      </div>
+      <div class="walk-body" id="walkBody"></div>
+      <div class="walk-nav">
+        <button id="prevBtn" onclick="goStep(currentStep-1)" disabled>← 上一步</button>
+        <button id="nextBtn" onclick="goStep(currentStep+1)">下一步 →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ §5: 速查表 ══════════ -->
+<section class="reveal">
+  <div class="container">
+    <h2 class="section-title">📋 重构 Prompt 速查表</h2>
+    <p class="section-subtitle">Do vs Don't + 5 条即用 Prompt，助你安全高效地完成每次重构。</p>
+
+    <div class="dodont-grid">
+      <div class="dodont-col do-col">
+        <div class="dodont-header do-header">✅ Do — 推荐做法</div>
+        <div class="dodont-item"><span class="icon">✅</span> 重构前先确保测试覆盖</div>
+        <div class="dodont-item"><span class="icon">✅</span> 一次只做一种重构</div>
+        <div class="dodont-item"><span class="icon">✅</span> 重构后立即运行测试</div>
+        <div class="dodont-item"><span class="icon">✅</span> 用 git commit 记录每步重构</div>
+        <div class="dodont-item"><span class="icon">✅</span> 让 AI 解释重构理由</div>
+      </div>
+      <div class="dodont-col dont-col">
+        <div class="dodont-header dont-header">❌ Don't — 避免做法</div>
+        <div class="dodont-item"><span class="icon">❌</span> 同时修改行为和重构代码</div>
+        <div class="dodont-item"><span class="icon">❌</span> 一次性重构整个文件</div>
+        <div class="dodont-item"><span class="icon">❌</span> 跳过代码审查直接合并</div>
+        <div class="dodont-item"><span class="icon">❌</span> 忽略 AI 生成代码的边界情况</div>
+        <div class="dodont-item"><span class="icon">❌</span> 重构没有测试覆盖的代码</div>
+      </div>
+    </div>
+
+    <h3 style="text-align:center;margin-bottom:20px;font-size:1.15rem;font-weight:700">🚀 5 条即用 Prompt</h3>
+    <div class="quick-prompts">
+      <div class="quick-prompt" id="qp0">
+        <div class="prompt-title">① 代码异味扫描</div>分析以下代码，列出所有代码异味（code smells）：过长函数、重复代码、过深嵌套、参数过多、魔法数字等。按严重程度排序，给出修复优先级。<button class="copy-btn" onclick="copyText('qp0')" title="复制">📋</button>
+      </div>
+      <div class="quick-prompt" id="qp1">
+        <div class="prompt-title">② 安全重构</div>重构以下函数，只改善结构不改变行为。重构后列出你做的每项修改和原因，确保所有调用点不受影响。<button class="copy-btn" onclick="copyText('qp1')" title="复制">📋</button>
+      </div>
+      <div class="quick-prompt" id="qp2">
+        <div class="prompt-title">③ 类型增强</div>为以下 JavaScript 代码添加 TypeScript 类型注解。消除所有 any，使用 interface/type 定义数据结构，添加必要的类型守卫。<button class="copy-btn" onclick="copyText('qp2')" title="复制">📋</button>
+      </div>
+      <div class="quick-prompt" id="qp3">
+        <div class="prompt-title">④ 模块拆分规划</div>这个文件有 500+ 行代码。分析其中的职责，给出按功能拆分的方案：每个新模块的文件名、包含的函数、以及新的 index.ts 导出文件。<button class="copy-btn" onclick="copyText('qp3')" title="复制">📋</button>
+      </div>
+      <div class="quick-prompt" id="qp4">
+        <div class="prompt-title">⑤ 重构审查</div>审查这次重构 diff。确认：1) 外部行为是否完全保留 2) 是否有遗漏的调用点 3) 边界情况是否都已处理 4) 命名是否清晰一致。<button class="copy-btn" onclick="copyText('qp4')" title="复制">📋</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ Footer ══════════ -->
+<footer>
+  <div class="container">
+    <p>AI 辅助重构实战 · 系统性消除技术债</p>
+    <p style="margin-top:8px;font-size:.8rem">由 <a href="#">followAI</a> 出品 · 2025</p>
+  </div>
+</footer>
+
+<script>
+/* ══════════ IIFE ══════════ */
+;(function(){
+  "use strict";
+
+  /* ── Scroll Reveal ── */
+  var revealEls = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    revealEls.forEach(function(e){ e.classList.add('visible') });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px' });
+    revealEls.forEach(function(el){
+      io.observe(el);
+      setTimeout(function(){ el.classList.add('visible') }, 2500);
+    });
+  }
+
+  /* ── Tab Component ── */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var tabPanels = document.querySelectorAll('.tab-panel');
+
+  window.switchTab = function(index) {
+    tabBtns.forEach(function(btn, i){
+      btn.setAttribute('aria-selected', i === index ? 'true' : 'false');
+    });
+    tabPanels.forEach(function(panel, i){
+      panel.classList.toggle('active', i === index);
+    });
+  };
+
+  /* ── CLEAN Card Toggle ── */
+  window.toggleClean = function(card) {
+    var wasExpanded = card.classList.contains('expanded');
+    document.querySelectorAll('.clean-card').forEach(function(c){
+      c.classList.remove('expanded');
+    });
+    if (!wasExpanded) {
+      card.classList.add('expanded');
+    }
+  };
+
+  /* ── Copy to Clipboard ── */
+  window.copyText = function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var text = el.textContent || el.innerText;
+    /* Remove trailing clipboard icon and prompt title */
+    text = text.replace(/📋$/,'').replace(/^[①-⑤]\s*[\w\s—]+\n/,'').trim();
+    var btn = el.querySelector('.copy-btn');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){
+        showCopied(btn);
+      }).catch(function(){
+        fallbackCopy(text, btn);
+      });
+    } else {
+      fallbackCopy(text, btn);
+    }
+  };
+
+  function fallbackCopy(text, btn) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showCopied(btn);
+    } catch(e) { /* silent */ }
+    document.body.removeChild(ta);
+  }
+
+  function showCopied(btn) {
+    if (!btn) return;
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(function(){
+      btn.textContent = '📋';
+      btn.classList.remove('copied');
+    }, 1500);
+  }
+
+  /* ── Walkthrough ── */
+  var currentStep = 0;
+  window.currentStep = currentStep;
+
+  var walkSteps = [
+    {
+      title: '步骤 1：分析代码 🔍',
+      desc: '这是一个典型的"上帝函数"——验证、查询、权限检查、业务逻辑全部挤在一起，认知复杂度极高。',
+      code:
+'<span class="cm">// user-service.ts — 重构前（原始代码）</span>\n' +
+'<span class="kw">async function</span> <span class="fn">updateUser</span>(id, data, role) {\n' +
+'  <span class="kw">if</span> (!id) <span class="kw">throw new</span> Error(<span class="str">\'missing id\'</span>)\n' +
+'  <span class="kw">if</span> (!data) <span class="kw">throw new</span> Error(<span class="str">\'missing data\'</span>)\n' +
+'  <span class="kw">if</span> (data.email) {\n' +
+'    <span class="kw">if</span> (!/^[^@]+@[^@]+\\.[^@]+$/.test(data.email)) {\n' +
+'      <span class="kw">throw new</span> Error(<span class="str">\'invalid email\'</span>)\n' +
+'    }\n' +
+'  }\n' +
+'  <span class="kw">if</span> (data.phone) {\n' +
+'    <span class="kw">if</span> (!/^1[3-9]\\d{9}$/.test(data.phone)) {\n' +
+'      <span class="kw">throw new</span> Error(<span class="str">\'invalid phone\'</span>)\n' +
+'    }\n' +
+'  }\n' +
+'  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">findById</span>(id)\n' +
+'  <span class="kw">if</span> (!user) <span class="kw">throw new</span> Error(<span class="str">\'user not found\'</span>)\n' +
+'  <span class="kw">if</span> (role !== <span class="str">\'admin\'</span>) {\n' +
+'    <span class="kw">if</span> (user.id !== id) {\n' +
+'      <span class="kw">throw new</span> Error(<span class="str">\'no permission\'</span>)\n' +
+'    }\n' +
+'  }\n' +
+'  <span class="kw">const</span> updated = { ...user, ...data, updatedAt: <span class="kw">new</span> Date() }\n' +
+'  <span class="kw">await</span> db.<span class="fn">save</span>(updated)\n' +
+'  <span class="kw">await</span> <span class="fn">sendNotification</span>(user.email, <span class="str">\'profile updated\'</span>)\n' +
+'  <span class="kw">return</span> updated\n' +
+'}'
+    },
+    {
+      title: '步骤 2：提取函数 ✂️',
+      desc: '将验证逻辑提取为独立函数。Prompt：<em>"将 updateUser 中的验证逻辑提取为 validateUserData 函数。"</em>',
+      code:
+'<span class="cm">// 提取验证逻辑为独立函数</span>\n' +
+'<span class="kw">const</span> EMAIL_RE = <span class="num">/^[^@]+@[^@]+\\.[^@]+$/</span>\n' +
+'<span class="kw">const</span> PHONE_RE = <span class="num">/^1[3-9]\\d{9}$/</span>\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">validateUserData</span>(data) {\n' +
+'  <span class="kw">if</span> (!data) <span class="kw">throw new</span> Error(<span class="str">\'missing data\'</span>)\n' +
+'  <span class="kw">if</span> (data.email && !EMAIL_RE.test(data.email)) {\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid email\'</span>)\n' +
+'  }\n' +
+'  <span class="kw">if</span> (data.phone && !PHONE_RE.test(data.phone)) {\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid phone\'</span>)\n' +
+'  }\n' +
+'}\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">checkPermission</span>(user, requesterId, role) {\n' +
+'  <span class="kw">if</span> (role !== <span class="str">\'admin\'</span> && user.id !== requesterId) {\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'no permission\'</span>)\n' +
+'  }\n' +
+'}\n' +
+'\n' +
+'<span class="cm">// updateUser 变得更清晰</span>\n' +
+'<span class="kw">async function</span> <span class="fn">updateUser</span>(id, data, role) {\n' +
+'  <span class="kw">if</span> (!id) <span class="kw">throw new</span> Error(<span class="str">\'missing id\'</span>)\n' +
+'  <span class="fn">validateUserData</span>(data)\n' +
+'  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">findById</span>(id)\n' +
+'  <span class="kw">if</span> (!user) <span class="kw">throw new</span> Error(<span class="str">\'user not found\'</span>)\n' +
+'  <span class="fn">checkPermission</span>(user, id, role)\n' +
+'  <span class="kw">const</span> updated = { ...user, ...data, updatedAt: <span class="kw">new</span> Date() }\n' +
+'  <span class="kw">await</span> db.<span class="fn">save</span>(updated)\n' +
+'  <span class="kw">await</span> <span class="fn">sendNotification</span>(user.email, <span class="str">\'profile updated\'</span>)\n' +
+'  <span class="kw">return</span> updated\n' +
+'}'
+    },
+    {
+      title: '步骤 3：简化条件 🔀',
+      desc: '用 early return 模式扁平化嵌套条件。Prompt：<em>"用 guard clause 简化 validateUserData 和 checkPermission。"</em>',
+      code:
+'<span class="cm">// 使用 guard clause 让逻辑更扁平</span>\n' +
+'<span class="kw">function</span> <span class="fn">validateUserData</span>(data) {\n' +
+'  <span class="kw">if</span> (!data) <span class="kw">throw new</span> Error(<span class="str">\'missing data\'</span>)\n' +
+'\n' +
+'  <span class="kw">if</span> (data.email && !EMAIL_RE.test(data.email))\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid email\'</span>)\n' +
+'\n' +
+'  <span class="kw">if</span> (data.phone && !PHONE_RE.test(data.phone))\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid phone\'</span>)\n' +
+'}\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">checkPermission</span>(user, requesterId, role) {\n' +
+'  <span class="kw">if</span> (role === <span class="str">\'admin\'</span>) <span class="kw">return</span>  <span class="cm">// admin 直接放行</span>\n' +
+'  <span class="kw">if</span> (user.id === requesterId) <span class="kw">return</span>  <span class="cm">// 本人放行</span>\n' +
+'  <span class="kw">throw new</span> Error(<span class="str">\'no permission\'</span>)\n' +
+'}\n' +
+'\n' +
+'<span class="kw">async function</span> <span class="fn">updateUser</span>(id, data, role) {\n' +
+'  <span class="kw">if</span> (!id) <span class="kw">throw new</span> Error(<span class="str">\'missing id\'</span>)\n' +
+'  <span class="fn">validateUserData</span>(data)\n' +
+'\n' +
+'  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">findById</span>(id)\n' +
+'  <span class="kw">if</span> (!user) <span class="kw">throw new</span> Error(<span class="str">\'user not found\'</span>)\n' +
+'\n' +
+'  <span class="fn">checkPermission</span>(user, id, role)\n' +
+'\n' +
+'  <span class="kw">const</span> updated = { ...user, ...data, updatedAt: <span class="kw">new</span> Date() }\n' +
+'  <span class="kw">await</span> db.<span class="fn">save</span>(updated)\n' +
+'  <span class="kw">await</span> <span class="fn">sendNotification</span>(user.email, <span class="str">\'profile updated\'</span>)\n' +
+'  <span class="kw">return</span> updated\n' +
+'}'
+    },
+    {
+      title: '步骤 4：添加类型 📐',
+      desc: '为所有函数添加 TypeScript 类型。Prompt：<em>"为 updateUser 及其辅助函数添加完整的 TypeScript 类型定义。"</em>',
+      code:
+'<span class="cm">// 添加完整的 TypeScript 类型</span>\n' +
+'<span class="kw">interface</span> <span class="type">User</span> {\n' +
+'  id: <span class="type">string</span>\n' +
+'  email: <span class="type">string</span>\n' +
+'  phone?: <span class="type">string</span>\n' +
+'  name: <span class="type">string</span>\n' +
+'  updatedAt: <span class="type">Date</span>\n' +
+'}\n' +
+'\n' +
+'<span class="kw">interface</span> <span class="type">UpdateData</span> {\n' +
+'  email?: <span class="type">string</span>\n' +
+'  phone?: <span class="type">string</span>\n' +
+'  name?: <span class="type">string</span>\n' +
+'}\n' +
+'\n' +
+'<span class="kw">type</span> <span class="type">Role</span> = <span class="str">\'admin\'</span> | <span class="str">\'user\'</span> | <span class="str">\'viewer\'</span>\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">validateUserData</span>(data: <span class="type">UpdateData</span>): <span class="type">void</span> { ... }\n' +
+'<span class="kw">function</span> <span class="fn">checkPermission</span>(\n' +
+'  user: <span class="type">User</span>, requesterId: <span class="type">string</span>, role: <span class="type">Role</span>\n' +
+'): <span class="type">void</span> { ... }\n' +
+'\n' +
+'<span class="kw">async function</span> <span class="fn">updateUser</span>(\n' +
+'  id: <span class="type">string</span>,\n' +
+'  data: <span class="type">UpdateData</span>,\n' +
+'  role: <span class="type">Role</span>\n' +
+'): Promise&lt;<span class="type">User</span>&gt; {\n' +
+'  <span class="kw">if</span> (!id) <span class="kw">throw new</span> Error(<span class="str">\'missing id\'</span>)\n' +
+'  <span class="fn">validateUserData</span>(data)\n' +
+'  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">findById</span>(id)\n' +
+'  <span class="kw">if</span> (!user) <span class="kw">throw new</span> Error(<span class="str">\'user not found\'</span>)\n' +
+'  <span class="fn">checkPermission</span>(user, id, role)\n' +
+'  <span class="kw">const</span> updated: <span class="type">User</span> = {\n' +
+'    ...user, ...data, updatedAt: <span class="kw">new</span> Date()\n' +
+'  }\n' +
+'  <span class="kw">await</span> db.<span class="fn">save</span>(updated)\n' +
+'  <span class="kw">await</span> <span class="fn">sendNotification</span>(user.email, <span class="str">\'profile updated\'</span>)\n' +
+'  <span class="kw">return</span> updated\n' +
+'}'
+    },
+    {
+      title: '步骤 5：最终结果 ✨',
+      desc: '经过 4 步重构，代码从一个 30 行的"上帝函数"变成了职责清晰、类型安全、易于测试的模块化代码。',
+      code:
+'<span class="cm">// ═══ user-service.ts — 重构完成 ═══</span>\n' +
+'\n' +
+'<span class="kw">interface</span> <span class="type">User</span> { id: <span class="type">string</span>; email: <span class="type">string</span>; phone?: <span class="type">string</span>; name: <span class="type">string</span>; updatedAt: <span class="type">Date</span> }\n' +
+'<span class="kw">interface</span> <span class="type">UpdateData</span> { email?: <span class="type">string</span>; phone?: <span class="type">string</span>; name?: <span class="type">string</span> }\n' +
+'<span class="kw">type</span> <span class="type">Role</span> = <span class="str">\'admin\'</span> | <span class="str">\'user\'</span> | <span class="str">\'viewer\'</span>\n' +
+'\n' +
+'<span class="kw">const</span> EMAIL_RE = <span class="num">/^[^@]+@[^@]+\\.[^@]+$/</span>\n' +
+'<span class="kw">const</span> PHONE_RE = <span class="num">/^1[3-9]\\d{9}$/</span>\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">validateUserData</span>(data: <span class="type">UpdateData</span>): <span class="type">void</span> {\n' +
+'  <span class="kw">if</span> (!data) <span class="kw">throw new</span> Error(<span class="str">\'missing data\'</span>)\n' +
+'  <span class="kw">if</span> (data.email && !EMAIL_RE.test(data.email))\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid email\'</span>)\n' +
+'  <span class="kw">if</span> (data.phone && !PHONE_RE.test(data.phone))\n' +
+'    <span class="kw">throw new</span> Error(<span class="str">\'invalid phone\'</span>)\n' +
+'}\n' +
+'\n' +
+'<span class="kw">function</span> <span class="fn">checkPermission</span>(user: <span class="type">User</span>, requesterId: <span class="type">string</span>, role: <span class="type">Role</span>): <span class="type">void</span> {\n' +
+'  <span class="kw">if</span> (role === <span class="str">\'admin\'</span>) <span class="kw">return</span>\n' +
+'  <span class="kw">if</span> (user.id === requesterId) <span class="kw">return</span>\n' +
+'  <span class="kw">throw new</span> Error(<span class="str">\'no permission\'</span>)\n' +
+'}\n' +
+'\n' +
+'<span class="kw">export async function</span> <span class="fn">updateUser</span>(\n' +
+'  id: <span class="type">string</span>, data: <span class="type">UpdateData</span>, role: <span class="type">Role</span>\n' +
+'): Promise&lt;<span class="type">User</span>&gt; {\n' +
+'  <span class="kw">if</span> (!id) <span class="kw">throw new</span> Error(<span class="str">\'missing id\'</span>)\n' +
+'  <span class="fn">validateUserData</span>(data)\n' +
+'\n' +
+'  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">findById</span>(id)\n' +
+'  <span class="kw">if</span> (!user) <span class="kw">throw new</span> Error(<span class="str">\'user not found\'</span>)\n' +
+'\n' +
+'  <span class="fn">checkPermission</span>(user, id, role)\n' +
+'\n' +
+'  <span class="kw">const</span> updated: <span class="type">User</span> = { ...user, ...data, updatedAt: <span class="kw">new</span> Date() }\n' +
+'  <span class="kw">await</span> db.<span class="fn">save</span>(updated)\n' +
+'  <span class="kw">await</span> <span class="fn">sendNotification</span>(user.email, <span class="str">\'profile updated\'</span>)\n' +
+'  <span class="kw">return</span> updated\n' +
+'}\n' +
+'\n' +
+'<span class="ok">// ✅ 职责分离 · 类型安全 · 易于测试 · 可维护</span>'
+    }
+  ];
+
+  window.currentStep = 0;
+
+  window.goStep = function(n) {
+    if (n < 0 || n >= walkSteps.length) return;
+    window.currentStep = n;
+    var s = walkSteps[n];
+    var body = document.getElementById('walkBody');
+    body.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>' +
+      '<pre class="code-pre" style="border-radius:8px;padding:20px;margin:0">' + s.code + '</pre>';
+    var btns = document.querySelectorAll('.walk-step-btn');
+    btns.forEach(function(b, i){ b.classList.toggle('active', i === n) });
+    document.getElementById('prevBtn').disabled = n === 0;
+    document.getElementById('nextBtn').disabled = n === walkSteps.length - 1;
+  };
+
+  /* keyboard nav */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') window.goStep(window.currentStep + 1);
+    if (e.key === 'ArrowLeft') window.goStep(window.currentStep - 1);
+  });
+
+  /* init */
+  window.goStep(0);
+
+})();
+</script>
+</body>
+</html>
